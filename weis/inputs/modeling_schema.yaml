@@ -2553,6 +2553,11 @@ properties:
                         enum: [0, 1, 2]
                         default: 0
                         description: Flap control mode {0, no flap control, 1, steady state flap angle, 2, Proportional flap control}
+                    DAC_Mode:
+                        type: integer
+                        enum: [0, 1, 2]
+                        default: 0
+                        description: DAC control mode {0, no DAC control, 1, steady state DAC setting, 2, Proportional DAC control}
                     PwC_Mode:
                         type: integer
                         enum: [0, 1, 2]

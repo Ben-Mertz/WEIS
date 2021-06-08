@@ -134,6 +134,7 @@ properties:
             - torque
         optional:
             - dac
+            - dac_gen
             - setpoint_smooth
             - shutdown     # might need to be required?
             - yaw
@@ -598,6 +599,25 @@ properties:
                     Flp_zeta:
                         type: number
                         description: Flap controller desired damping ratio. It is used by the ROSCO controller (https://github.com/NREL/ROSCO)
+                        unit: none
+                        minimum: 0
+                        maximum: 5
+            dac_gen:
+                type: object
+                description: Control parameters for distributed aerodynamic control devices
+                required:
+                    - Dac_omega
+                    - Dac_zeta
+                properties:
+                    Dac_omega:
+                        type: number
+                        description: Generic Active Flow Control Device controller desired natural frequency. ***TODO:It is used by the ROSCO controller (https://github.com/NREL/ROSCO)
+                        unit: rad/s
+                        minimum: 0
+                        maximum: 5
+                    Dac_zeta:
+                        type: number
+                        description: Generic Active Flow Control Device controller desired damping ratio. ***TODO:It is used by the ROSCO controller (https://github.com/NREL/ROSCO)
                         unit: none
                         minimum: 0
                         maximum: 5

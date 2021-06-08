@@ -61,6 +61,43 @@ properties:
                                         maximum: 1.0
                                         minimum: 0.0
                                         default: 0.2
+                    dac:
+                        type: object
+                        default: {}
+                        properties:
+                            dac_end:
+                                type: object
+                                default: {}
+                                properties:
+                                    flag: &flag
+                                        type: boolean
+                                        default: False
+                                        description: Activates as a design variable or constraint
+                                    minimum:
+                                        type: number
+                                        maximum: 1.0
+                                        minimum: 0.1
+                                        default: 1.0
+                                    maximum:
+                                        type: number
+                                        maximum: 1.0
+                                        minimum: 0.1
+                                        default: 1.0
+                            dac_ext:
+                                type: object
+                                default: {}
+                                properties:
+                                    flag: *flag
+                                    minimum:
+                                        type: number
+                                        maximum: 1.0
+                                        minimum: 0.0
+                                        default: 0.01
+                                    maximum:
+                                        type: number
+                                        maximum: 1.0
+                                        minimum: 0.0
+                                        default: 0.2
                     tsr:
                         type: object
                         default: {}
@@ -167,6 +204,35 @@ properties:
                                         minimum: 0.0
                                         maximum: 10.0
                                         unit: none
+                            dac_control:
+                                type: object
+                                default: {}
+                                properties:
+                                    flag: *flag
+                                    omega_min: &omega_min
+                                        type: number
+                                        default: 0.1
+                                        minimum: 0.0
+                                        maximum: 10.0
+                                        unit: none
+                                    omega_max: &omega_max
+                                        type: number
+                                        default: 0.7
+                                        minimum: 0.0
+                                        maximum: 10.0
+                                        unit: none
+                                    zeta_min: &zeta_min
+                                        type: number
+                                        default: 0.4
+                                        minimum: 0.0
+                                        maximum: 10.0
+                                        unit: none
+                                    zeta_max: &zeta_max
+                                        type: number
+                                        default: 1.5
+                                        minimum: 0.0
+                                        maximum: 10.0
+                                        unit: none
                             ipc_control:
                                 type: object
                                 default: {}
@@ -194,6 +260,18 @@ properties:
                                 minimum: 0.0
                                 maximum: 1.0e+6
                             max: *flapminmax
+                    dac_control:
+                        type: object
+                        description: Words TODO
+                        default: {}
+                        properties:
+                            flag: *flag
+                            min: &dacminmax
+                                type: number
+                                default: 0.05
+                                minimum: 0.0
+                                maximum: 1.0e+6
+                            max: *dacminmax
                     rotor_overspeed:
                         type: object
                         description: (Maximum rotor speed / rated rotor speed) - 1
