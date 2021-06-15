@@ -24,43 +24,6 @@ properties:
                 type: object
                 default: {}
                 properties:
-                    flaps:
-                        type: object
-                        default: {}
-                        properties:
-                            te_flap_end:
-                                type: object
-                                default: {}
-                                properties:
-                                    flag: &flag
-                                        type: boolean
-                                        default: False
-                                        description: Activates as a design variable or constraint
-                                    minimum:
-                                        type: number
-                                        maximum: 1.0
-                                        minimum: 0.1
-                                        default: 1.0
-                                    maximum:
-                                        type: number
-                                        maximum: 1.0
-                                        minimum: 0.1
-                                        default: 1.0
-                            te_flap_ext:
-                                type: object
-                                default: {}
-                                properties:
-                                    flag: *flag
-                                    minimum:
-                                        type: number
-                                        maximum: 1.0
-                                        minimum: 0.0
-                                        default: 0.01
-                                    maximum:
-                                        type: number
-                                        maximum: 1.0
-                                        minimum: 0.0
-                                        default: 0.2
                     dac:
                         type: object
                         default: {}
@@ -175,36 +138,36 @@ properties:
                                 properties:
                                     omega: *control_omega
                                     zeta: *control_zeta
-                            flap_control:
-                                type: object
-                                default: {}
-                                properties:
-                                    flag: *flag
-                                    omega_min: &omega_min
-                                        type: number
-                                        default: 0.1
-                                        minimum: 0.0
-                                        maximum: 10.0
-                                        unit: none
-                                    omega_max: &omega_max
-                                        type: number
-                                        default: 0.7
-                                        minimum: 0.0
-                                        maximum: 10.0
-                                        unit: none
-                                    zeta_min: &zeta_min
-                                        type: number
-                                        default: 0.4
-                                        minimum: 0.0
-                                        maximum: 10.0
-                                        unit: none
-                                    zeta_max: &zeta_max
-                                        type: number
-                                        default: 1.5
-                                        minimum: 0.0
-                                        maximum: 10.0
-                                        unit: none
-                            dac_control:
+                            # flap_control:
+                            #     type: object
+                            #     default: {}
+                            #     properties:
+                            #         flag: *flag
+                            #         omega_min: &omega_min
+                            #             type: number
+                            #             default: 0.1
+                            #             minimum: 0.0
+                            #             maximum: 10.0
+                            #             unit: none
+                            #         omega_max: &omega_max
+                            #             type: number
+                            #             default: 0.7
+                            #             minimum: 0.0
+                            #             maximum: 10.0
+                            #             unit: none
+                            #         zeta_min: &zeta_min
+                            #             type: number
+                            #             default: 0.4
+                            #             minimum: 0.0
+                            #             maximum: 10.0
+                            #             unit: none
+                            #         zeta_max: &zeta_max
+                            #             type: number
+                            #             default: 1.5
+                            #             minimum: 0.0
+                            #             maximum: 10.0
+                            #             unit: none
+                            dac_control: # May not be needed if you use flap_control instead
                                 type: object
                                 default: {}
                                 properties:

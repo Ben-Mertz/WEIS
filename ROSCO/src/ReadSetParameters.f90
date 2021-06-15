@@ -66,7 +66,7 @@ CONTAINS
         READ(UnControllerParameters, *) CntrPar%PS_Mode        
         READ(UnControllerParameters, *) CntrPar%SD_Mode        
         READ(UnControllerParameters, *) CntrPar%FL_Mode        
-        READ(UnControllerParameters, *) CntrPar%Flp_Mode        
+        READ(UnControllerParameters, *) CntrPar%DAC_Mode        
         READ(UnControllerParameters, *)
 
         !----------------- FILTER CONSTANTS ---------------------
@@ -203,9 +203,9 @@ CONTAINS
         READ(UnControllerParameters, *) CntrPar%Fl_Kp  
         READ(UnControllerParameters, *) 
 
-        !------------ Flaps ------------
+        !------------ DAC ------------
         READ(UnControllerParameters, *)      
-        READ(UnControllerParameters, *) CntrPar%Flp_Angle  
+        READ(UnControllerParameters, *) CntrPar%dac_param  
         READ(UnControllerParameters, *) CntrPar%Flp_Kp  
         READ(UnControllerParameters, *) CntrPar%Flp_Ki  
         READ(UnControllerParameters, *) CntrPar%Flp_MaxPit  

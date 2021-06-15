@@ -1442,9 +1442,6 @@ ServoDyn['TTMD_YQD']          = False     # (m/s); Tower Y TMD velocity; Relativ
 ServoDyn['BLFLAP1']          = False     # (m/s); Tower Y TMD velocity; Relative to tower
 ServoDyn['BLFLAP2']          = False     # (m/s); Tower Y TMD velocity; Relative to tower
 ServoDyn['BLFLAP3']          = False     # (m/s); Tower Y TMD velocity; Relative to tower
-ServoDyn['BLDAC1']          = False     # DAC Control parameter for blade 1 (i.e. flap angle, spoiler height, etc.)
-ServoDyn['BLDAC2']          = False     # DAC Control parameter for blade 2 (i.e. flap angle, spoiler height, etc.)
-ServoDyn['BLDAC3']          = False     # DAC Control parameter for blade 3 (i.e. flap angle, spoiler height, etc.)
 
 """ AeroDyn """
 AeroDyn = {}

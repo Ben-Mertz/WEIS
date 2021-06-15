@@ -859,7 +859,7 @@ class InputWriter_OpenFAST(object):
             elif self.fst_vt['AeroDyn15']['AFTabMod'] == 3:
                 # for tab_orig in range(self.fst_vt['AeroDyn15']['af_data'][afi][0]['NumTabs'] - 1):
                 if self.fst_vt['AeroDyn15']['af_data'][afi][0]['Ctrl'] == self.fst_vt['AeroDyn15']['af_data'][afi][1]['Ctrl']:
-                    num_tab = 1  # assume that all Ctrl angles of the flaps are identical if the first two are -> no flaps!
+                    num_tab = 1  # assume that all Ctrl angles of the flaps are identical if the first two are -> no flaps! TODO: change wording to encompass other DAC devices
                 else:
                     num_tab = self.fst_vt['AeroDyn15']['af_data'][afi][0]['NumTabs']
             else:
@@ -1166,7 +1166,7 @@ class InputWriter_OpenFAST(object):
         controller.PS_Mode              = int(self.fst_vt['DISCON_in']['PS_Mode'])
         controller.SD_Mode              = int(self.fst_vt['DISCON_in']['SD_Mode'])
         controller.Fl_Mode              = int(self.fst_vt['DISCON_in']['Fl_Mode'])
-        controller.Flp_Mode             = int(self.fst_vt['DISCON_in']['Flp_Mode'])
+        controller.DAC_Mode             = int(self.fst_vt['DISCON_in']['DAC_Mode'])
         controller.F_LPFDamping         = self.fst_vt['DISCON_in']['F_LPFDamping']
         controller.ss_cornerfreq        = self.fst_vt['DISCON_in']['F_SSCornerFreq']
         controller.pitch_op_pc          = self.fst_vt['DISCON_in']['PC_GS_angles']
@@ -1195,12 +1195,12 @@ class InputWriter_OpenFAST(object):
         controller.Kp_float             = self.fst_vt['DISCON_in']['Fl_Kp']
         controller.Kp_flap              = self.fst_vt['DISCON_in']['Flp_Kp']
         controller.Ki_flap              = self.fst_vt['DISCON_in']['Flp_Ki']
-        controller.flp_angle            = self.fst_vt['DISCON_in']['Flp_Angle']
+        controller.dac_param            = self.fst_vt['DISCON_in']['dac_param']
         controller.flp_maxpit           = self.fst_vt['DISCON_in']['Flp_MaxPit']
-        controller.Kp_dac              = self.fst_vt['DISCON_in']['Dac_Kp']
-        controller.Ki_dac              = self.fst_vt['DISCON_in']['Dac_Ki']
-        controller.dac_param            = self.fst_vt['DISCON_in']['Dac_Param']
-        controller.dac_maxpit           = self.fst_vt['DISCON_in']['Dac_MaxPit']
+        # controller.Kp_dac              = self.fst_vt['DISCON_in']['Dac_Kp'] #Right now we will be using "flap" control values for any DAC device but we should either change the the naming convention or add in these additional parameters
+        # controller.Ki_dac              = self.fst_vt['DISCON_in']['Dac_Ki']
+        # controller.dac_param            = self.fst_vt['DISCON_in']['Dac_Param']
+        # controller.dac_maxpit           = self.fst_vt['DISCON_in']['Dac_MaxPit']
 
         turbine = type('', (), {})()
         turbine.Cp = type('', (), {})()

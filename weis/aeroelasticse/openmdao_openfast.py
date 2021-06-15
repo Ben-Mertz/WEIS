@@ -1068,7 +1068,7 @@ class FASTLoadCases(ExplicitComponent):
 
         # Channels for distributed aerodynamic control
         if self.n_tab > 1:
-            channels_out += ['BLFLAP1', 'BLFLAP2', 'BLFLAP3']
+            channels_out += ['BLFLAP1', 'BLFLAP2', 'BLFLAP3'] #TODO: We may need to make the naming convention more general to includ eother DAC models
 
         # Channels for monopile-based structure
         if self.options['modeling_options']['flags']['monopile']:

@@ -120,8 +120,8 @@ TYPE, PUBLIC :: ControlParameters
     INTEGER(4)                          :: Fl_Mode                      ! Floating specific feedback mode {0: no nacelle velocity feedback, 1: nacelle velocity feedback}
     REAL(8)                             :: Fl_Kp                        ! Nacelle velocity proportional feedback gain [s]
 
-    INTEGER(4)                          :: Flp_Mode                     ! Flap actuator mode {0: off, 1: fixed flap position, 2: PI flap control}
-    REAL(8)                             :: Flp_Angle                    ! Fixed flap angle (degrees)
+    INTEGER(4)                          :: DAC_Mode                     ! DAC actuator mode {0: off, 1: fixed dac parameter, 2: PI DAC control}
+    REAL(8)                             :: dac_param                    ! DAC Param (if a flaf angle, it is in deg)
     REAL(8)                             :: Flp_Kp                       ! PI flap control proportional gain 
     REAL(8)                             :: Flp_Ki                       ! PI flap control integral gain 
     REAL(8)                             :: Flp_MaxPit                   ! Maximum (and minimum) flap pitch angle [rad]
@@ -197,7 +197,7 @@ TYPE, PUBLIC :: LocalVariables
     LOGICAL(1)                          :: SD                           ! Shutdown, .FALSE. if inactive, .TRUE. if active
     REAL(8)                             :: Fl_PitCom                           ! Shutdown, .FALSE. if inactive, .TRUE. if active
     REAL(8)                             :: NACIMU_FA_AccF
-    REAL(8)                             :: Flp_Angle(3)                 ! Flap Angle (rad)
+    REAL(8)                             :: dac_param(3)                 ! DAC Parameter (if Flap Angle has units of rad)
     END TYPE LocalVariables
 
 TYPE, PUBLIC :: ObjectInstances

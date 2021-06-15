@@ -75,7 +75,7 @@ def write_DISCON(turbine, controller, param_file='DISCON.IN', txt_filename='Cp_C
     file.write('{0:<12d}        ! PS_Mode           - Pitch saturation mode {{0: no pitch saturation, 1: implement pitch saturation}}\n'.format(int(controller.PS_Mode > 0)))
     file.write('{0:<12d}        ! SD_Mode           - Shutdown mode {{0: no shutdown procedure, 1: pitch to max pitch at shutdown}}\n'.format(int(controller.SD_Mode)))
     file.write('{0:<12d}        ! Fl_Mode           - Floating specific feedback mode {{0: no nacelle velocity feedback, 1: nacelle velocity feedback}}\n'.format(int(controller.Fl_Mode)))
-    file.write('{0:<12d}        ! Flp_Mode          - Flap control mode {{0: no flap control, 1: steady state flap angle, 2: Proportional flap control}}\n'.format(int(controller.Flp_Mode)))
+    file.write('{0:<12d}        ! DAC_Mode          - DAC control mode {{0: no DAC control, 1: steady state DAC Control parameter, 2: Proportional DAC control}}\n'.format(int(controller.DAC_Mode)))
     file.write('\n')
     file.write('!------- FILTERS ----------------------------------------------------------\n') 
     file.write('{:<13.5f}       ! F_LPFCornerFreq	- Corner frequency (-3dB point) in the low-pass filters, [rad/s]\n'.format(turbine.bld_edgewise_freq * 1/4)) 
@@ -172,8 +172,8 @@ def write_DISCON(turbine, controller, param_file='DISCON.IN', txt_filename='Cp_C
     file.write('!------- Floating -----------------------------------------------------------\n')
     file.write('{:<014.5f}      ! Fl_Kp             - Nacelle velocity proportional feedback gain [s]\n'.format(controller.Kp_float))
     file.write('\n')
-    file.write('!------- FLAP ACTUATION -----------------------------------------------------\n')
-    file.write('{:<014.5f}      ! Flp_Angle         - Initial or steady state flap angle [rad]\n'.format(controller.flp_angle))
+    file.write('!------- DAC ACTUATION -----------------------------------------------------\n')
+    file.write('{:<014.5f}      ! dac_param         - Initial or steady state DAC control parameter [-]\n'.format(controller.dac_param))
     file.write('{:<014.8e}      ! Flp_Kp            - Blade root bending moment proportional gain for flap control [s]\n'.format(controller.Kp_flap[-1]))
     file.write('{:<014.8e}      ! Flp_Ki            - Flap displacement integral gain for flap control [-]\n'.format(controller.Ki_flap[-1]))
     file.write('{:<014.5f}      ! Flp_MaxPit        - Maximum (and minimum) flap pitch angle [rad]'.format(controller.flp_maxpit))
@@ -362,7 +362,7 @@ def DISCON_dict(turbine, controller, txt_filename=None):
     DISCON_dict['PS_Mode']          = controller.PS_Mode
     DISCON_dict['SD_Mode']          = controller.SD_Mode
     DISCON_dict['Fl_Mode']          = controller.Fl_Mode
-    DISCON_dict['Flp_Mode']         = controller.Flp_Mode
+    DISCON_dict['DAC_Mode']         = controller.DAC_Mode
     # ------- FILTERS -------
     DISCON_dict['F_LPFCornerFreq']	    = turbine.bld_edgewise_freq * 1/4
     DISCON_dict['F_LPFDamping']		    = controller.F_LPFDamping
@@ -446,8 +446,8 @@ def DISCON_dict(turbine, controller, txt_filename=None):
     DISCON_dict['SD_CornerFreq']    = controller.sd_cornerfreq
     # ------- Floating -------
     DISCON_dict['Fl_Kp']            = controller.Kp_float
-    # ------- FLAP ACTUATION -------
-    DISCON_dict['Flp_Angle']        = controller.flp_angle
+    # ------- DAC ACTUATION -------
+    DISCON_dict['dac_param']        = controller.dac_param
     DISCON_dict['Flp_Kp']           = [controller.Kp_flap[-1]]
     DISCON_dict['Flp_Ki']           = [controller.Ki_flap[-1]]
     DISCON_dict['Flp_MaxPit']       = controller.flp_maxpit

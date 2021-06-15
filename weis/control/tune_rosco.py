@@ -56,7 +56,7 @@ class TuneROSCO(ExplicitComponent):
         self.controller_params['PS_Mode'] = rosco_init_options['PS_Mode']
         self.controller_params['SD_Mode'] = rosco_init_options['SD_Mode']
         self.controller_params['Fl_Mode'] = rosco_init_options['Fl_Mode']
-        self.controller_params['Flp_Mode'] = rosco_init_options['Flp_Mode']
+        self.controller_params['DAC_Mode'] = rosco_init_options['DAC_Mode']
 
         # Necessary parameters
         # Turbine parameters
@@ -104,7 +104,7 @@ class TuneROSCO(ExplicitComponent):
         self.n_aoa      = n_aoa        = rotorse_options['n_aoa']# Number of angle of attacks
         self.n_Re       = n_Re         = rotorse_options['n_Re'] # Number of Reynolds, so far hard set at 1
         self.n_tab      = n_tab        = rotorse_options['n_tab']# Number of tabulated data. For distributed aerodynamic control this could be > 1
-        self.n_te_flaps = n_te_flaps   = rotorse_options['n_te_flaps']
+        self.n_dac = n_dac   = rotorse_options['n_dac']
         self.add_input('r',             val=np.zeros(n_span),               units='m',          desc='radial locations where blade is defined (should be increasing and not go all the way to hub or tip)')
         self.add_input('chord',         val=np.zeros(n_span),               units='m',          desc='chord length at each section')
         self.add_input('theta',         val=np.zeros(n_span),               units='deg',        desc='twist angle at each section (positive decreases angle of attack)')
@@ -127,7 +127,7 @@ class TuneROSCO(ExplicitComponent):
         self.add_discrete_input('nBlades',         val=0,                                       desc='number of blades')
         self.add_input('mu',            val=1.81e-5,                        units='kg/(m*s)',   desc='dynamic viscosity of air')
         self.add_input('shearExp',      val=0.0,                                                desc='shear exponent')
-        self.add_input('delta_max_pos', val=np.zeros(n_te_flaps),           units='rad',        desc='1D array of the max angle of the trailing edge flaps.')
+        self.add_input('delta_max_pos', val=np.zeros(n_dac),           units='rad',             desc='1D array of the max dac control parameter.')
         self.add_discrete_input('nSector',      val=4,                                          desc='number of sectors to divide rotor face into in computing thrust and power')
         self.add_discrete_input('tiploss',      val=True,                                       desc='include Prandtl tip loss model')
         self.add_discrete_input('hubloss',      val=True,                                       desc='include Prandtl hub loss model')
@@ -141,7 +141,7 @@ class TuneROSCO(ExplicitComponent):
         self.add_input('ptfm_freq',         val=0.0,        units='rad/s',                      desc='Platform natural frequency')
         self.add_input('VS_zeta',           val=0.0,                                            desc='Generator torque controller damping ratio')
         self.add_input('VS_omega',          val=0.0,        units='rad/s',                      desc='Generator torque controller natural frequency')
-        if rosco_init_options['Flp_Mode'] > 0:
+        if rosco_init_options['DAC_Mode'] > 0:
             self.add_input('Flp_omega',        val=0.0, units='rad/s',                         desc='Flap controller natural frequency')
             self.add_input('Flp_zeta',         val=0.0,                                        desc='Flap controller damping ratio')
         self.add_input('IPC_Ki1p',          val=0.0,            units='rad/(N*m)',  desc='Individual pitch controller 1p gain')
@@ -168,7 +168,7 @@ class TuneROSCO(ExplicitComponent):
         rosco_init_options['zeta_pc']     = inputs['PC_zeta']
         rosco_init_options['omega_vs']    = inputs['VS_omega']
         rosco_init_options['zeta_vs']     = inputs['VS_zeta']
-        if rosco_init_options['Flp_Mode'] > 0:
+        if rosco_init_options['DAC_Mode'] > 0:
             rosco_init_options['omega_flp'] = inputs['Flp_omega']
             rosco_init_options['zeta_flp']  = inputs['Flp_zeta']
         else:
@@ -181,7 +181,7 @@ class TuneROSCO(ExplicitComponent):
         rosco_init_options['ss_vsgain']   = float(inputs['ss_vsgain'])
         rosco_init_options['ss_pcgain']   = float(inputs['ss_pcgain'])
         rosco_init_options['ps_percent']  = float(inputs['ps_percent'])
-        if rosco_init_options['Flp_Mode'] > 0:
+        if rosco_init_options['DAC_Mode'] > 0:
             rosco_init_options['flp_maxpit']  = float(inputs['delta_max_pos'])
         else:
             rosco_init_options['flp_maxpit']  = None
@@ -231,7 +231,7 @@ class TuneROSCO(ExplicitComponent):
         WISDEM_turbine.Cq   = RotorPerformance(self.Cq_table,self.pitch_vector,self.tsr_vector)
 
         # Load blade info to pass to flap controller tuning process
-        if rosco_init_options['Flp_Mode'] >= 1:
+        if rosco_init_options['DAC_Mode'] >= 1:
             # Create airfoils
             af = [None]*self.n_span
             for i in range(self.n_span):
@@ -291,7 +291,7 @@ class TuneROSCO(ExplicitComponent):
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['PS_Mode'] = controller.PS_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['SD_Mode'] = controller.SD_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Fl_Mode'] = controller.Fl_Mode
-        self.modeling_options['openfast']['fst_vt']['DISCON_in']['Flp_Mode'] = controller.Flp_Mode
+        self.modeling_options['openfast']['fst_vt']['DISCON_in']['DAC_Mode'] = controller.DAC_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['F_LPFDamping'] = controller.F_LPFDamping
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['F_SSCornerFreq'] = controller.ss_cornerfreq
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['PC_GS_angles'] = controller.pitch_op_pc
@@ -318,7 +318,7 @@ class TuneROSCO(ExplicitComponent):
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Flp_Kp'] = controller.Kp_flap
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Flp_Ki'] = controller.Ki_flap
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Flp_MaxPit'] = controller.flp_maxpit
-        self.modeling_options['openfast']['fst_vt']['DISCON_in']['Flp_Angle'] = 0.
+        self.modeling_options['openfast']['fst_vt']['DISCON_in']['dac_param'] = 0.
         
         # - turbine
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['WE_BladeRadius'] = WISDEM_turbine.rotor_radius
@@ -348,7 +348,7 @@ class TuneROSCO(ExplicitComponent):
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Cq'] = WISDEM_turbine.Cq
 
         # Outputs 
-        if rosco_init_options['Flp_Mode'] >= 1:
+        if rosco_init_options['DAC_Mode'] >= 1:
             outputs['flptune_coeff1']   = 2*WISDEM_turbine.bld_flapwise_damp*WISDEM_turbine.bld_flapwise_freq + controller.kappa[-1]*WISDEM_turbine.bld_flapwise_freq**2*controller.Kp_flap[-1]
             outputs['flptune_coeff2']   = WISDEM_turbine.bld_flapwise_freq**2*(controller.Ki_flap[-1]*controller.kappa[-1] + 1)
         outputs['PC_Kp']   = controller.pc_gain_schedule.Kp[0]

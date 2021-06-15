@@ -134,7 +134,6 @@ properties:
             - torque
         optional:
             - dac
-            - dac_gen
             - setpoint_smooth
             - shutdown     # might need to be required?
             - yaw
@@ -587,7 +586,7 @@ properties:
                 type: object
                 description: Control parameters for distributed aerodynamic control devices
                 required:
-                    - Flp_omega
+                    - Flp_omega #TODO BEM: Replace Flp designation to be more generic for different DAC devices 
                     - Flp_zeta
                 properties:
                     Flp_omega:
@@ -602,26 +601,6 @@ properties:
                         unit: none
                         minimum: 0
                         maximum: 5
-            dac_gen:
-                type: object
-                description: Control parameters for distributed aerodynamic control devices
-                required:
-                    - Dac_omega
-                    - Dac_zeta
-                properties:
-                    Dac_omega:
-                        type: number
-                        description: Generic Active Flow Control Device controller desired natural frequency. ***TODO:It is used by the ROSCO controller (https://github.com/NREL/ROSCO)
-                        unit: rad/s
-                        minimum: 0
-                        maximum: 5
-                    Dac_zeta:
-                        type: number
-                        description: Generic Active Flow Control Device controller desired damping ratio. ***TODO:It is used by the ROSCO controller (https://github.com/NREL/ROSCO)
-                        unit: none
-                        minimum: 0
-                        maximum: 5
-
             user_defined_SS_1: &uss
                 type: object
                 description: User defined state-space linear controllers within ROSCO, only 1 for now

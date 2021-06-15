@@ -60,14 +60,14 @@ class Controller():
         self.PS_Mode = controller_params['PS_Mode']
         self.SD_Mode = controller_params['SD_Mode']
         self.Fl_Mode = controller_params['Fl_Mode']
-        self.Flp_Mode = controller_params['Flp_Mode']
+        self.DAC_Mode = controller_params['DAC_Mode']
 
         # Necessary parameters
         self.zeta_pc = controller_params['zeta_pc']
         self.omega_pc = controller_params['omega_pc']
         self.zeta_vs = controller_params['zeta_vs']
         self.omega_vs = controller_params['omega_vs']
-        if self.Flp_Mode > 0:
+        if self.DAC_Mode > 0:
             self.zeta_flp = controller_params['zeta_flp']
             self.omega_flp = controller_params['omega_flp']
 
@@ -130,7 +130,7 @@ class Controller():
         if controller_params['flp_maxpit']:
             self.flp_maxpit = controller_params['flp_maxpit']
         else:
-            if controller_params['Flp_Mode'] > 0:
+            if controller_params['DAC_Mode'] > 0:
                 self.flp_maxpit = 10.0 * deg2rad
             else:
                 self.flp_maxpit = 0.0
@@ -319,18 +319,18 @@ class Controller():
         self.Ki_ipc1p = 0.0
         
         # Flap actuation 
-        if self.Flp_Mode >= 1:
-            self.flp_angle = 0.0
+        if self.DAC_Mode >= 1:
+            self.dac_param = 0.0
             try:
                 self.tune_flap_controller(turbine)
             except AttributeError:
-                print('ERROR: If Flp_Mode > 0, you need to have blade information loaded in the turbine object.')
+                print('ERROR: If DAC_Mode > 0, you need to have blade information loaded in the turbine object.')
                 raise
             except UnboundLocalError:
                 print('ERROR: You are attempting to tune a flap controller for a blade without flaps!')
                 raise
         else:
-            self.flp_angle = 0.0
+            self.dac_param = 0.0
             self.Ki_flap = np.array([0.0])
             self.Kp_flap = np.array([0.0])
 
@@ -380,7 +380,7 @@ class Controller():
             # assume airfoil section as AOA of zero for slope calculations - for now
             a0_ind = section[0]['Alpha'].index(np.min(np.abs(section[0]['Alpha'])))
             # Coefficients 
-            if section[0]['NumTabs'] == 3:  # sections with 3 flaps
+            if section[0]['NumTabs'] == 3:  # sections with 3 flaps (or other dac devices)
                 Clm[i,] = section[0]['Cl'][a0_ind]
                 Cdm[i,] = section[0]['Cd'][a0_ind]
                 Cl0[i,] = section[1]['Cl'][a0_ind]
@@ -388,7 +388,7 @@ class Controller():
                 Clp[i,] = section[2]['Cl'][a0_ind]
                 Cdp[i,] = section[2]['Cd'][a0_ind]
                 Ctrl_flp = float(section[2]['Ctrl'])
-            else:                           # sections without 3 flaps
+            else:                           # sections without 3 flaps (or other dac devices)
                 Cl0[i,] = Clp[i,] = Clm[i,] = section[0]['Cl'][a0_ind]
                 Cd0[i,] = Cdp[i,] = Cdm[i,] = section[0]['Cd'][a0_ind]
                 Ctrl = float(section[0]['Ctrl'])
@@ -417,7 +417,7 @@ class Controller():
 
         # PI Gains
         if (self.zeta_flp == 0 or self.omega_flp == 0) or (not self.zeta_flp or not self.omega_flp):
-            sys.exit('ERROR! --- Zeta and Omega flap must be nonzero for Flp_Mode >= 1 ---')
+            sys.exit('ERROR! --- Zeta and Omega flap must be nonzero for DAC_Mode >= 1 ---')
 
         self.Kp_flap = (2*self.zeta_flp*self.omega_flp - 2*zetaf*omegaf)/(self.kappa*omegaf**2)
         self.Ki_flap = (self.omega_flp**2 - omegaf**2)/(self.kappa*omegaf**2)
