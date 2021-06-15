@@ -322,10 +322,13 @@ class RunXFOIL(ExplicitComponent):
                         # Initialize the profile coordinates to zeros
                         self.dac_profiles[i]['coords']     = np.zeros([self.n_xy,2,self.n_tab]) 
                             # Ben:I am not going to force it to include delta=0.  If this is needed, a more complicated way of getting flap deflections to calculate is needed.
-                        dac_param = np.linspace(inputs['delta_max_neg'][k],inputs['delta_max_pos'][k],self.n_tab) # TODO: need to convert if it is actually a flap deflection andle * 180. / np.pi
+                        if self.dac_model == 1:
+                            dac_param = np.linspace(inputs['delta_max_neg'][k],inputs['delta_max_pos'][k],self.n_tab) * 180. / np.pi # Convert to degrees if if it a TE flap
+                        else:
+                            dac_param = np.linspace(inputs['delta_max_neg'][k],inputs['delta_max_pos'][k],self.n_tab)
                         # Loop through the flap angles
                         for ind, fa in enumerate(dac_param):
-                            if self.dac_model == 1:
+                            if self.dac_model == 1: # Only get airfoil coordinates from XFOIL if XFOIL is being used to calculate flap polars
                                 # NOTE: negative flap angles are deflected to the suction side, i.e. positively along the positive z- (radial) axis
                                 af_dac = CCAirfoil(np.array([1,2,3]), np.array([100]), np.zeros(3), np.zeros(3), np.zeros(3), inputs['coord_xy_interp'][i,:,0], inputs['coord_xy_interp'][i,:,1], "Profile"+str(i)) # bem:I am creating an airfoil name based on index...this structure/naming convention is being assumed in CCAirfoil.runXfoil() via the naming convention used in CCAirfoil.af_flap_coords(). Note that all of the inputs besides profile coordinates and name are just dummy varaiables at this point.
                                 af_dac.af_dac_coords(self.xfoil_path, fa,  inputs['chord_start'][k],0.5,200, **xfoil_kw) #bem: the last number is the number of points in the profile.  It is currently being hard coded at 200 but should be changed to make sure it is the same number of points as the other profiles
@@ -341,7 +344,7 @@ class RunXFOIL(ExplicitComponent):
                                     self.dac_profiles[i]['coords'][:,1,ind] = af_dac.af_dac_ycoords
                             self.dac_profiles[i]['dac_param'].append([])
                             self.dac_profiles[i]['dac_param'][ind] = fa # Putting in flap angles to blade for each profile (can be used for debugging later)
-                            print('I got to here and dac_param = ' + str(self.dac_profiles[i]['dac_param'][ind]) + ' i = ' + str(i) + ' ind = ' + str(ind))
+
                         # # ** The code below will plot the first three flap deflection profiles (in the case where there are only 3 this will correspond to max negative, zero, and max positive deflection cases)
                         # font = {'family': 'Times New Roman',
                         #         'weight': 'normal',
@@ -572,8 +575,6 @@ class RunXFOIL(ExplicitComponent):
                 run_xfoil_params['s'] = inputs['s']
                 run_xfoil_params['r'] = inputs['r']
                 run_xfoil_params['aoa'] = inputs['aoa']
-                print('test:I have copied dac_profiles into run_xfoil_params check = ' + str(self.dac_profiles[20]['dac_param'][1]))
-                print('test2:I have copied dac_profiles into run_xfoil_params check = ' + str(run_xfoil_params['dac_profiles'][20]['dac_param'][1]))
 
                 # Run XFoil as multiple processors with MPI
                 if MPI and not self.options['opt_options']['driver']['design_of_experiments']['flag']:
@@ -653,7 +654,6 @@ class RunXFOIL(ExplicitComponent):
                                             
                 else:
                     for afi in range(self.n_span): # iterate number of radial stations for various airfoil tables
-                        print('Test 3: get_dac_polars check = ' + str(run_xfoil_params['dac_profiles'][20]['dac_param'][1]))
                         cl_interp_dac_af, cd_interp_dac_af, cm_interp_dac_af, dac_control_af, Re_loc_af, Ma_loc_af = get_dac_polars(run_xfoil_params, afi)
                         
                         cl_interp_dac[afi,:,:,:] = cl_interp_dac_af
@@ -756,15 +756,12 @@ def get_dac_polars(run_xfoil_params, afi):
     xfoil_path          = copy.deepcopy(run_xfoil_params['xfoil_path'])
     aoa                 = copy.deepcopy(run_xfoil_params['aoa'])
     dac_model           = copy.deepcopy(run_xfoil_params['dac_model'])
-    print('Test 4: get_dac_polars check = ' + str(run_xfoil_params['dac_profiles'][20]['dac_param'][1]))
-    print('Test 5: get_dac_polars check = ' + str(dac_profiles[20]['dac_param'][1]))
 
     #if 'coords' in dac_profiles[afi]: # check if 'coords' is an element of 'dac_profiles', i.e. if we have various flap angles
     if dac_model > 0 and 'dac_param' in dac_profiles[afi]: # check if airfoil polars need to be created using either XFOIL or general_dac_model
         # for j in range(n_Re): # ToDo incorporade variable Re capability
         for ind in range(n_tab):
             #fa = flap_profiles[afi]['flap_angles'][ind] # value of respective flap angle
-            print('Test 6: get_dac_polars check = ' + str(dac_profiles[afi]['dac_param'][ind]))
             dac_control_af[:,ind] = dac_profiles[afi]['dac_param'][ind] # control parameter of distributed aerodynamics control
             # eta = (blade['pf']['r'][afi]/blade['pf']['r'][-1])
             # eta = blade['outer_shape_bem']['chord']['grid'][afi]
@@ -785,7 +782,7 @@ def get_dac_polars(run_xfoil_params, afi):
 
                 data = runXfoil(xfoil_path, dac_profiles[afi]['coords'][:, 0, ind],dac_profiles[afi]['coords'][:, 1, ind],Re_loc_af[0, ind], **xfoil_kw)
             else:
-                print('Run General DAC Model for nondimensional blade span section s = ' + str(s) + ' with ' + str(dac_control_af[0,ind]) + ' dac comtrol parameter; Re equal to ' + str(Re_loc_af[0,ind]) + '; Ma equal to ' + str(Ma_loc_af[0,ind]))
+                print('Run General DAC Model for nondimensional blade span section s = ' + str(s) + ' with ' + str(dac_control_af[0,ind]) + ' dac control parameter; Re equal to ' + str(Re_loc_af[0,ind]) + '; Ma equal to ' + str(Ma_loc_af[0,ind]))
 
                 clmax_ratio,stall_shift,LD_ratio,alpha0_shift,S_ratio,CD0_shift = LE_Spoiler(dac_control_af[0,ind]) #bem: TODO I need to add in the ability to use the low fidelity TE flap as an option or build in the ability to use different low fidelity models
                 data = general_dac_mod(aoa,cl_interp_dac_af[:,0,ind],cd_interp_dac_af[:,0,ind],cm_interp_dac_af[:,0,ind],clmax_ratio,stall_shift,LD_ratio,alpha0_shift,S_ratio,CD0_shift)

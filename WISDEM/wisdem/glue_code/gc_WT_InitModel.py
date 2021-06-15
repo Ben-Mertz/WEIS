@@ -583,7 +583,7 @@ def assign_dac_values(wt_opt, modeling_options, blade):
                     )
                 else:
                     pass
-        if "le_spoilers" in blade["aerodynamic_control"]:
+        elif "le_spoilers" in blade["aerodynamic_control"]:
             for i in range(n_dac):
                 wt_opt["dac_ivc.dac_start"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["span_start"]
                 wt_opt["dac_ivc.dac_end"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["span_end"]
