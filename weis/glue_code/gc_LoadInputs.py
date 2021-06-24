@@ -109,6 +109,7 @@ class WindTurbineOntologyPythonWEIS(WindTurbineOntologyPython):
             if self.modeling_options['Level3']['ROSCO']['DAC_Mode'] > 0:
                 self.wt_init['control']['dac']['Flp_omega']= float(wt_opt['tune_rosco_ivc.Flp_omega'])
                 self.wt_init['control']['dac']['Flp_zeta'] = float(wt_opt['tune_rosco_ivc.Flp_zeta'])
+                self.wt_init['control']['dac']['dac_type'] = self.modeling_options['WISDEM']['RotorSE']['dac_type']   
             if 'IPC' in self.wt_init['control'].keys():
                 self.wt_init['control']['IPC']['IPC_gain_1P'] = float(wt_opt['tune_rosco_ivc.IPC_Ki1p'])
 

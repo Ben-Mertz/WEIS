@@ -26,6 +26,7 @@ class Outputs_2_Screen(om.ExplicitComponent):
         self.add_input('VS_zeta',       val=0.0)
         self.add_input('Flp_omega',     val=0.0, units='rad/s')
         self.add_input('Flp_zeta',      val=0.0)
+        self.add_input('dac_type',      val=0)
         self.add_input('IPC_Ki1p',      val=0.0, units='rad/(N*m)')
         self.add_input('tip_deflection',val=0.0, units='m')
         self.add_input('dac_end'   ,val=np.zeros(n_dac))

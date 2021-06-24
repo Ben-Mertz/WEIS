@@ -367,7 +367,7 @@ CONTAINS
 
     END FUNCTION FloatingFeedback
 !-------------------------------------------------------------------------------------------------------------------------------
-    SUBROUTINE DACControl(avrSWAP, CntrPar, LocalVar, objInst)
+    SUBROUTINE AeroControl(avrSWAP, CntrPar, LocalVar, objInst)
         ! Yaw rate controller
         !       Y_ControlMode = 0, No yaw control
         !       Y_ControlMode = 1, Simple yaw rate control using yaw drive
@@ -386,7 +386,7 @@ CONTAINS
         REAL(8), SAVE                             :: RootMyb_Last(3)
         REAL(8)                                   :: RootMyb_VelErr(3)
 
-        ! DAC Control
+        ! Distributed Aerodynamic Control
         IF (CntrPar%DAC_Mode >= 1) THEN
             IF ((LocalVar%iStatus == 0) .AND. (CntrPar%DAC_Mode >= 1)) THEN
                 RootMyb_Last(1) = 0 - LocalVar%rootMOOP(1)
@@ -405,7 +405,7 @@ CONTAINS
                     LocalVar%dac_param(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%dac_param(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, 0.05, -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, .TRUE., objInst%instPI)
                 ENDIF
             
-            ! Steady DAC Param
+            ! Steady Aero Control Param
             ELSEIF (CntrPar%DAC_Mode == 1) THEN
                 LocalVar%dac_param(1) = LocalVar%dac_param(1) 
                 LocalVar%dac_param(2) = LocalVar%dac_param(2) 
@@ -416,7 +416,7 @@ CONTAINS
                 !     LocalVar%dac_param(3) = LocalVar%dac_param(3) + 1*D2R
                 ! ENDIF
 
-            ! PII DAC control
+            ! PII Aero control
             ELSEIF (CntrPar%DAC_Mode == 2) THEN
                 DO K = 1,LocalVar%NumBl
                     ! LPF Blade root bending moment
@@ -434,14 +434,33 @@ CONTAINS
                     ! Save some data for next iteration
                     RootMyb_Last(K) = RootMOOP_F(K)
                 END DO
+            ! Shutdown Aero control (logic only for LE Spoilers currently)
+            ELSEIF (CntrPar%DAC_Mode == 3) THEN
+                DO K = 1,LocalVar%NumBl
+                    IF (LocalVar%SD) THEN
+                    
+                        ! Set to max extension
+                        LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                    ELSE
+                        LocalVar%dac_param(K) = 0.0
+                    ENDIF
+                END DO
             ENDIF
 
             ! Send to AVRSwap
-            avrSWAP(120) = LocalVar%dac_param(1) * R2D   ! Needs to be sent to openfast in degrees ! Need to change for the case where dac_param is not an angle
-            avrSWAP(121) = LocalVar%dac_param(2) * R2D   ! Needs to be sent to openfast in degrees
-            avrSWAP(122) = LocalVar%dac_param(3) * R2D   ! Needs to be sent to openfast in degrees
+            ! For TE Flaps
+            IF (CntrPar%dac_type < 1) THEN
+                avrSWAP(120) = LocalVar%dac_param(1) * R2D   ! Needs to be sent to openfast in degrees
+                avrSWAP(121) = LocalVar%dac_param(2) * R2D   ! Needs to be sent to openfast in degrees
+                avrSWAP(122) = LocalVar%dac_param(3) * R2D   ! Needs to be sent to openfast in degrees
+            !For LE Spoilers
+            ELSE
+                avrSWAP(120) = LocalVar%dac_param(1)   ! Leave in default units
+                avrSWAP(121) = LocalVar%dac_param(2)   ! Leave in default units
+                avrSWAP(122) = LocalVar%dac_param(3)   ! Leave in default units
+            ENDIF
         ELSE
             RETURN
         ENDIF
-    END SUBROUTINE DACControl
+    END SUBROUTINE AeroControl
 END MODULE Controllers

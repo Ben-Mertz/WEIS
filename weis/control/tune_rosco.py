@@ -57,6 +57,7 @@ class TuneROSCO(ExplicitComponent):
         self.controller_params['SD_Mode'] = rosco_init_options['SD_Mode']
         self.controller_params['Fl_Mode'] = rosco_init_options['Fl_Mode']
         self.controller_params['DAC_Mode'] = rosco_init_options['DAC_Mode']
+        self.controller_params['dac_type'] = rotorse_init_options['dac_type']
 
         # Necessary parameters
         # Turbine parameters
@@ -144,7 +145,8 @@ class TuneROSCO(ExplicitComponent):
         if rosco_init_options['DAC_Mode'] > 0:
             self.add_input('Flp_omega',        val=0.0, units='rad/s',                         desc='Flap controller natural frequency')
             self.add_input('Flp_zeta',         val=0.0,                                        desc='Flap controller damping ratio')
-        self.add_input('IPC_Ki1p',          val=0.0,            units='rad/(N*m)',  desc='Individual pitch controller 1p gain')
+            self.add_input('dac_type',         val=0,                                          desc='Flag for flaps (0) or spoilers (1)')
+        self.add_input('IPC_Ki1p',          val=0.0, units='rad/(N*m)',                        desc='Individual pitch controller 1p gain')
         # Outputs for constraints and optimizations
         self.add_output('flptune_coeff1',           val=0.0,            units='rad/s',        desc='First coefficient in denominator of flap controller tuning model')
         self.add_output('flptune_coeff2',           val=0.0,            units='(rad/s)**2',        desc='Second coefficient in denominator of flap controller tuning model')
@@ -183,6 +185,7 @@ class TuneROSCO(ExplicitComponent):
         rosco_init_options['ps_percent']  = float(inputs['ps_percent'])
         if rosco_init_options['DAC_Mode'] > 0:
             rosco_init_options['flp_maxpit']  = float(inputs['delta_max_pos'])
+            rosco_init_options['dac_type']  = inputs['dac_type']
         else:
             rosco_init_options['flp_maxpit']  = None
         #
@@ -292,6 +295,7 @@ class TuneROSCO(ExplicitComponent):
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['SD_Mode'] = controller.SD_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Fl_Mode'] = controller.Fl_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['DAC_Mode'] = controller.DAC_Mode
+        self.modeling_options['openfast']['fst_vt']['DISCON_in']['dac_type'] = controller.dac_type
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['F_LPFDamping'] = controller.F_LPFDamping
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['F_SSCornerFreq'] = controller.ss_cornerfreq
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['PC_GS_angles'] = controller.pitch_op_pc

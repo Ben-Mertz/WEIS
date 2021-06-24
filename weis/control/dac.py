@@ -797,34 +797,52 @@ def get_dac_polars(run_xfoil_params, afi):
                 cd_interp_dac_af[:,j,ind] = np.interp(np.degrees(aoa), polar.alpha, polar.cd)
                 cm_interp_dac_af[:,j,ind] = np.interp(np.degrees(aoa), polar.alpha, polar.cm)
 
-        # # ** The code below will plot the three cl polars
-            # import matplotlib.pyplot as plt
-            # font = {'family': 'Times New Roman',
-            #         'weight': 'normal',
-            #         'size': 18}
-            # plt.rc('font', **font)
-            # plt.figure
-            # fig, ax = plt.subplots(1, 1, figsize=(8, 5))
-            # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_flaps_af[afi,:,0,0],'r', label='$\\delta_{flap}$ = -10 deg')  # -10
-            # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_flaps_af[afi,:,0,1],'k', label='$\\delta_{flap}$ = 0 deg')  # 0
-            # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_flaps_af[afi,:,0,2],'b', label='$\\delta_{flap}$ = +10 deg')  # +10
-            # # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_flaps_af[afi,:,0,0],'r')  # -10
-            # # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_flaps_af[afi,:,0,1],'k')  # 0
-            # # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_flaps_af[afi,:,0,2],'b')  # +10
-            # plt.xlim(xmin=-15, xmax=15)
-            # plt.ylim(ymin=-1.7, ymax=2.2)
-            # plt.grid(True)
-            # # autoscale_y(ax)
-            # plt.xlabel('Angles of attack, deg')
-            # plt.ylabel('Lift coefficient')
-            # plt.legend(loc='lower right')
-            # plt.tight_layout()
-            # plt.show()
-            # # # # plt.savefig('airfoil_polars_check/r_R_1_0_cl_flaps.png', dpi=300)
-            # # # # plt.savefig('airfoil_polars_check/NACA63-618_cl_flaps.png', dpi=300)
-            # # # # plt.savefig('airfoil_polars_check/FFA-W3-211_cl_flaps.png', dpi=300)
-            # # # # plt.savefig('airfoil_polars_check/FFA-W3-241_cl_flaps.png', dpi=300)
-            # # # # plt.savefig('airfoil_polars_check/FFA-W3-301_cl_flaps.png', dpi=300)
+        # ** The code below will plot the three cl polars
+            # if ind == 2:
+            #     import matplotlib.pyplot as plt
+            #     font = {'family': 'Times New Roman',
+            #             'weight': 'normal',
+            #             'size': 18}
+            #     plt.rc('font', **font)
+            #     plt.figure
+            #     fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+            #     plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_dac_af[:,0,0],'r', label='$\\delta_{dac}$ = min dac param')  # -10
+            #     plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_dac_af[:,0,1],'k', label='$\\delta_{dac}$ = mid dac param')  # 0
+            #     plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_dac_af[:,0,2],'b', label='$\\delta_{dac}$ = max dac param')  # +10
+                
+            #     # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_dac_af[afi,:,0,0],'r')  # -10
+            #     # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_dac_af[afi,:,0,1],'k')  # 0
+            #     # plt.plot(np.degrees(run_xfoil_params['aoa']), cl_interp_dac_af[afi,:,0,2],'b')  # +10
+            #     plt.xlim(xmin=-25, xmax=25)
+            #     plt.ylim(ymin=-1.7, ymax=2.2)
+            #     plt.grid(True)
+            #     # autoscale_y(ax)
+            #     plt.xlabel('Angles of attack, deg')
+            #     plt.ylabel('Lift coefficient')
+            #     plt.legend(loc='lower right')
+            #     plt.tight_layout()
+            #     plt.show()
+
+            #     plt.figure
+            #     fig2, ax2 = plt.subplots(1, 1, figsize=(8, 5))
+            #     plt.plot(np.degrees(run_xfoil_params['aoa']), cd_interp_dac_af[:,0,0],'r', label='$\\delta_{dac}$ = min dac param')  # -10
+            #     plt.plot(np.degrees(run_xfoil_params['aoa']), cd_interp_dac_af[:,0,1],'k', label='$\\delta_{dac}$ = mid dac param')  # 0
+            #     plt.plot(np.degrees(run_xfoil_params['aoa']), cd_interp_dac_af[:,0,2],'b', label='$\\delta_{dac}$ = max dac param')  # +10
+                
+            #     plt.xlim(xmin=-25, xmax=25)
+            #     plt.ylim(ymin=-0.5, ymax=2.0)
+            #     plt.grid(True)
+
+            #     plt.xlabel('Angles of attack, deg')
+            #     plt.ylabel('Drag coefficient')
+            #     plt.legend(loc='lower right')
+            #     plt.tight_layout()
+            #     plt.show()
+                # # # plt.savefig('airfoil_polars_check/r_R_1_0_cl_dac.png', dpi=300)
+                # # # plt.savefig('airfoil_polars_check/NACA63-618_cl_dac.png', dpi=300)
+                # # # plt.savefig('airfoil_polars_check/FFA-W3-211_cl_dac.png', dpi=300)
+                # # # plt.savefig('airfoil_polars_check/FFA-W3-241_cl_dac.png', dpi=300)
+                # # # plt.savefig('airfoil_polars_check/FFA-W3-301_cl_dac.png', dpi=300)
 
 
 

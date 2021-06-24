@@ -75,7 +75,8 @@ def write_DISCON(turbine, controller, param_file='DISCON.IN', txt_filename='Cp_C
     file.write('{0:<12d}        ! PS_Mode           - Pitch saturation mode {{0: no pitch saturation, 1: implement pitch saturation}}\n'.format(int(controller.PS_Mode > 0)))
     file.write('{0:<12d}        ! SD_Mode           - Shutdown mode {{0: no shutdown procedure, 1: pitch to max pitch at shutdown}}\n'.format(int(controller.SD_Mode)))
     file.write('{0:<12d}        ! Fl_Mode           - Floating specific feedback mode {{0: no nacelle velocity feedback, 1: nacelle velocity feedback}}\n'.format(int(controller.Fl_Mode)))
-    file.write('{0:<12d}        ! DAC_Mode          - DAC control mode {{0: no DAC control, 1: steady state DAC Control parameter, 2: Proportional DAC control}}\n'.format(int(controller.DAC_Mode)))
+    file.write('{0:<12d}        ! DAC_Mode          - DAC control mode {{0: no DAC control, 1: steady state DAC Control parameter, 2: Proportional DAC control, 3: Shutdown control only}}\n'.format(int(controller.DAC_Mode)))
+    file.write('{0:<12d}        ! dac_type          - Type of DAC Device {{0: TE Flap, 1: LE Spoiler}}\n'.format(int(controller.dac_type)))
     file.write('\n')
     file.write('!------- FILTERS ----------------------------------------------------------\n') 
     file.write('{:<13.5f}       ! F_LPFCornerFreq	- Corner frequency (-3dB point) in the low-pass filters, [rad/s]\n'.format(turbine.bld_edgewise_freq * 1/4)) 
@@ -363,6 +364,7 @@ def DISCON_dict(turbine, controller, txt_filename=None):
     DISCON_dict['SD_Mode']          = controller.SD_Mode
     DISCON_dict['Fl_Mode']          = controller.Fl_Mode
     DISCON_dict['DAC_Mode']         = controller.DAC_Mode
+    DISCON_dict['dac_type']         = controller.dac_type
     # ------- FILTERS -------
     DISCON_dict['F_LPFCornerFreq']	    = turbine.bld_edgewise_freq * 1/4
     DISCON_dict['F_LPFDamping']		    = controller.F_LPFDamping

@@ -7,6 +7,7 @@ def assign_ROSCO_values(wt_opt, modeling_options, control):
     if modeling_options['Level3']['ROSCO']['DAC_Mode'] > 0:
         wt_opt['tune_rosco_ivc.Flp_omega']      = control['dac']['Flp_omega']
         wt_opt['tune_rosco_ivc.Flp_zeta']       = control['dac']['Flp_zeta']
+        wt_opt['tune_rosco_ivc.dac_type']       = modeling_options['WISDEM']['RotorSE']['dac_type']
     if 'IPC' in control.keys():
         wt_opt['tune_rosco_ivc.IPC_KI']      = control['IPC']['IPC_gain_1P']
     # # other optional parameters

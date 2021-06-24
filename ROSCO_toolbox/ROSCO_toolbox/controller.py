@@ -70,6 +70,7 @@ class Controller():
         if self.DAC_Mode > 0:
             self.zeta_flp = controller_params['zeta_flp']
             self.omega_flp = controller_params['omega_flp']
+            self.dac_type = controller_params['dac_type']
 
         # Optional parameters, default to standard if not defined
         if isinstance(controller_params['min_pitch'], float):
