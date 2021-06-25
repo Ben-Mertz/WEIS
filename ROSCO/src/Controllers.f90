@@ -437,7 +437,14 @@ CONTAINS
             ! Shutdown Aero control (logic only for LE Spoilers currently)
             ELSEIF (CntrPar%DAC_Mode == 3) THEN
                 DO K = 1,LocalVar%NumBl
-                    IF (LocalVar%SD) THEN
+                    !IF (LocalVar%SD) THEN
+                    
+                        ! Set to max extension
+                    !    LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                    !ELSE
+                    !    LocalVar%dac_param(K) = 0.0
+                    !ENDIF
+                    IF (LocalVar%Time >= 420.0) THEN
                     
                         ! Set to max extension
                         LocalVar%dac_param(K) = CntrPar%Flp_MaxPit

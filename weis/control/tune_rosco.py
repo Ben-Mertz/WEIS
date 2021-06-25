@@ -57,7 +57,8 @@ class TuneROSCO(ExplicitComponent):
         self.controller_params['SD_Mode'] = rosco_init_options['SD_Mode']
         self.controller_params['Fl_Mode'] = rosco_init_options['Fl_Mode']
         self.controller_params['DAC_Mode'] = rosco_init_options['DAC_Mode']
-        self.controller_params['dac_type'] = rotorse_init_options['dac_type']
+        if rosco_init_options['DAC_Mode'] > 0:
+            self.controller_params['dac_type'] = rotorse_init_options['dac_type']
 
         # Necessary parameters
         # Turbine parameters
@@ -295,7 +296,8 @@ class TuneROSCO(ExplicitComponent):
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['SD_Mode'] = controller.SD_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['Fl_Mode'] = controller.Fl_Mode
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['DAC_Mode'] = controller.DAC_Mode
-        self.modeling_options['openfast']['fst_vt']['DISCON_in']['dac_type'] = controller.dac_type
+        if controller.DAC_Mode > 0:
+            self.modeling_options['openfast']['fst_vt']['DISCON_in']['dac_type'] = controller.dac_type
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['F_LPFDamping'] = controller.F_LPFDamping
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['F_SSCornerFreq'] = controller.ss_cornerfreq
         self.modeling_options['openfast']['fst_vt']['DISCON_in']['PC_GS_angles'] = controller.pitch_op_pc
