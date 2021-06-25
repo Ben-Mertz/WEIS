@@ -54,7 +54,8 @@ class WindPark(om.Group):
         tune_rosco_ivc.add_output('VS_zeta',          val=0.0,                    desc='Generator torque controller damping ratio')
         tune_rosco_ivc.add_output('Flp_omega',        val=0.0, units='rad/s',     desc='Flap controller natural frequency')
         tune_rosco_ivc.add_output('Flp_zeta',         val=0.0,                    desc='Flap controller damping ratio')
-        tune_rosco_ivc.add_output('dac_type',         val=0,                      desc='aero control type (0: te flaps, 1: le spoilers)')
+        if modeling_options['Level3']['ROSCO']['DAC_Mode'] > 0:
+            tune_rosco_ivc.add_output('dac_type',         val=0,                      desc='aero control type (0: te flaps, 1: le spoilers)')
         tune_rosco_ivc.add_output('IPC_Ki1p',         val=0.0, units='rad/(N*m)', desc='Individual pitch controller 1p gain')
         # optional inputs - not connected right now!!
         tune_rosco_ivc.add_output('max_pitch',        val=0.0, units='rad',       desc='Maximum pitch angle , {default = 90 degrees}')

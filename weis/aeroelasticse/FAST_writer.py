@@ -1167,7 +1167,8 @@ class InputWriter_OpenFAST(object):
         controller.SD_Mode              = int(self.fst_vt['DISCON_in']['SD_Mode'])
         controller.Fl_Mode              = int(self.fst_vt['DISCON_in']['Fl_Mode'])
         controller.DAC_Mode             = int(self.fst_vt['DISCON_in']['DAC_Mode'])
-        controller.dac_type             = int(self.fst_vt['DISCON_in']['dac_type'])
+        if controller.DAC_Mode > 0:
+            controller.dac_type             = int(self.fst_vt['DISCON_in']['dac_type'])
         controller.F_LPFDamping         = self.fst_vt['DISCON_in']['F_LPFDamping']
         controller.ss_cornerfreq        = self.fst_vt['DISCON_in']['F_SSCornerFreq']
         controller.pitch_op_pc          = self.fst_vt['DISCON_in']['PC_GS_angles']

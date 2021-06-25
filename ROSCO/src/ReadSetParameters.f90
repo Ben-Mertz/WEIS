@@ -67,7 +67,9 @@ CONTAINS
         READ(UnControllerParameters, *) CntrPar%SD_Mode        
         READ(UnControllerParameters, *) CntrPar%FL_Mode        
         READ(UnControllerParameters, *) CntrPar%DAC_Mode
-        READ(UnControllerParameters, *) CntrPar%dac_type         
+        IF (CntrPar%DAC_Mode > 0) THEN
+            READ(UnControllerParameters, *) CntrPar%dac_type 
+        ENDIF        
         READ(UnControllerParameters, *)
 
         !----------------- FILTER CONSTANTS ---------------------
