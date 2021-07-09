@@ -313,11 +313,18 @@ CONTAINS
             SD_BlPitchF = LPFilter(LocalVar%PC_PitComT, LocalVar%DT, CntrPar%SD_CornerFreq, LocalVar%iStatus, .FALSE., objInst%instLPF)
             
             ! Go into shutdown if above max pit
-            IF (SD_BlPitchF > CntrPar%SD_MaxPit) THEN
+            !IF (SD_BlPitchF > CntrPar%SD_MaxPit) THEN
+            !    LocalVar%SD  = .TRUE.
+            !ELSE
+            !    LocalVar%SD  = .FALSE.
+            !ENDIF
+
+            ! Go into shutdown at specified time (420  seconds) 
+            IF (LocalVar%Time >= 420.0) THEN
                 LocalVar%SD  = .TRUE.
             ELSE
                 LocalVar%SD  = .FALSE.
-            ENDIF 
+            ENDIF
         ENDIF
 
         ! Pitch Blades to 90 degrees at max pitch rate if in shutdown mode

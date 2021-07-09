@@ -1219,6 +1219,7 @@ class FASTLoadCases(ExplicitComponent):
         iec.TMax      = fst_vt['Fst']['TMax']
         T0            = np.max([0. , iec.TMax - 600.])
         iec.TStart    = (iec.TMax-T0)/2. + T0
+        iec.PC_MaxRat = inputs['max_pitch_rate']
         self.simtime  = iec.TMax - T0
         self.TMax     = iec.TMax
         self.T0       = T0
