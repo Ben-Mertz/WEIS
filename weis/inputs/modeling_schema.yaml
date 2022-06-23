@@ -2548,11 +2548,21 @@ properties:
                         enum: [0, 1]
                         default: 0
                         description: Floating specific feedback mode {0, no nacelle velocity feedback, 1, nacelle velocity feedback}
-                    Flp_Mode:
+                    # Flp_Mode:
+                    #     type: integer
+                    #     enum: [0, 1, 2]
+                    #     default: 0
+                    #     description: Flap control mode {0, no flap control, 1, steady state flap angle, 2, Proportional flap control}
+                    DAC_Mode:
+                        type: integer
+                        enum: [0, 1, 2, 3, 4]
+                        default: 0
+                        description: DAC control mode {0, no DAC control, 1, steady state DAC setting, 2, Proportional DAC control, 3, Shutdown control only, 4, Specialty deployment}
+                    DAC_Model:
                         type: integer
                         enum: [0, 1, 2]
                         default: 0
-                        description: Flap control mode {0, no flap control, 1, steady state flap angle, 2, Proportional flap control}
+                        description: DAC actuator model {0, Actuated polars generated outside of WEIS, 1, XFOIL (only for TE flaps), 2, Low fidelity empirical model}
                     PwC_Mode:
                         type: integer
                         enum: [0, 1, 2]

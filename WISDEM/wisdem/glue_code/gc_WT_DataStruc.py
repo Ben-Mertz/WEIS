@@ -717,10 +717,10 @@ class Compute_Blade_Outer_Shape_BEM(om.ExplicitComponent):
         rotorse_options = self.options["rotorse_options"]
         n_af_span = rotorse_options["n_af_span"]
         self.n_span = n_span = rotorse_options["n_span"]
-        if "n_te_flaps" in rotorse_options.keys():
-            n_te_flaps = rotorse_options["n_te_flaps"]
+        if "n_dac" in rotorse_options.keys():
+            n_dac = rotorse_options["n_dac"]
         else:
-            n_te_flaps = 0
+            n_dac = 0
 
         self.add_input(
             "s_default",
@@ -750,12 +750,12 @@ class Compute_Blade_Outer_Shape_BEM(om.ExplicitComponent):
 
         self.add_input(
             "span_end",
-            val=np.zeros(n_te_flaps),
+            val=np.zeros(n_dac),
             desc="1D array of the positions along blade span where something (a DAC device?) starts and we want a grid point. Only values between 0 and 1 are meaningful.",
         )
         self.add_input(
             "span_ext",
-            val=np.zeros(n_te_flaps),
+            val=np.zeros(n_dac),
             desc="1D array of the extensions along blade span where something (a DAC device?) lives and we want a grid point. Only values between 0 and 1 are meaningful.",
         )
 
@@ -803,21 +803,21 @@ class Compute_Blade_Outer_Shape_BEM(om.ExplicitComponent):
 
             # Account for start and end positions
             if inputs["span_end"] >= 0.98:
-                flap_start = 0.98 - inputs["span_ext"]
-                flap_end = 0.98
+                dac_start = 0.98 - inputs["span_ext"]
+                dac_end = 0.98
                 # print("WARNING: span_end point reached limits and was set to r/R = 0.98")
             else:
-                flap_start = inputs["span_end"] - inputs["span_ext"]
-                flap_end = inputs["span_end"]
+                dac_start = inputs["span_end"] - inputs["span_ext"]
+                dac_end = inputs["span_end"]
 
-            idx_flap_start = np.where(np.abs(nd_span_orig - flap_start) == (np.abs(nd_span_orig - flap_start)).min())[
+            idx_dac_start = np.where(np.abs(nd_span_orig - dac_start) == (np.abs(nd_span_orig - dac_start)).min())[
                 0
             ][0]
-            idx_flap_end = np.where(np.abs(nd_span_orig - flap_end) == (np.abs(nd_span_orig - flap_end)).min())[0][0]
-            if idx_flap_start == idx_flap_end:
-                idx_flap_end += 1
-            outputs["s"][idx_flap_start] = flap_start
-            outputs["s"][idx_flap_end] = flap_end
+            idx_dac_end = np.where(np.abs(nd_span_orig - dac_end) == (np.abs(nd_span_orig - dac_end)).min())[0][0]
+            if idx_dac_start == idx_dac_end:
+                idx_dac_end += 1
+            outputs["s"][idx_dac_start] = dac_start
+            outputs["s"][idx_dac_end] = dac_end
             outputs["chord"] = np.interp(outputs["s"], nd_span_orig, chord_orig)
             outputs["twist"] = np.interp(outputs["s"], nd_span_orig, twist_orig)
             outputs["pitch_axis"] = np.interp(outputs["s"], nd_span_orig, pitch_axis_orig)

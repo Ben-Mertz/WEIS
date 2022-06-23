@@ -302,6 +302,16 @@ CONTAINS
         TYPE(ObjectInstances), INTENT(INOUT)    :: objInst
         ! Allocate Variables 
         REAL(8)                      :: SD_BlPitchF
+        REAL(8)                      :: SD_YawErrF
+        REAL(8)                      :: V_NearRated
+        REAL(8)                      :: YawSD_Slope
+        REAL(8)                      :: Offset
+        REAL(8)                      :: Delta
+        REAL(8)                      :: MaxYaw
+        REAL(8)                      :: SD_slope
+        REAL(8), Save                :: SD_time = 0.0
+        Logical                      :: downwind=.TRUE.
+        Logical                      :: SD_p2s=.FALSE.
         ! Initialize Shutdown Varible
         IF (LocalVar%iStatus == 0) THEN
             LocalVar%SD = .FALSE.
@@ -317,7 +327,39 @@ CONTAINS
                 LocalVar%SD  = .TRUE.
             ELSE
                 LocalVar%SD  = .FALSE.
-            ENDIF 
+            ENDIF
+
+            ! Go into shutdown at specified time (420  seconds) 
+            !IF (LocalVar%Time >= 420.0) THEN
+            !    LocalVar%SD  = .TRUE.
+            !ELSE
+            !    LocalVar%SD  = .FALSE.
+            !ENDIF
+
+            ! Filter pitch signal
+            !SD_BlPitchF = LPFilter(LocalVar%PC_PitComT, LocalVar%DT, CntrPar%SD_CornerFreq, LocalVar%iStatus, .FALSE., objInst%instLPF)
+            ! Filter yaw error
+            !SD_YawErrF  = LPFilter(LocalVar%Y_M, LocalVar%DT, 0.2*CntrPar%SD_CornerFreq, LocalVar%iStatus, .FALSE., objInst%instLPF)
+            ! Find maximum yaw angle
+            !YawSD_Slope = (120.0 - 60.0)/(CntrPar%VS_MinOMSpd - CntrPar%PC_RefSpd)
+            !Offset = 120.0 - YawSD_Slope * CntrPar%VS_MinOMSpd
+            !Delta = CntrPar%PC_RefSpd - CntrPar%VS_MinOMSpd
+            !IF (LocalVar%GenSpeedF < CntrPar%VS_MinOMSpd + 0.2 * Delta) THEN
+            !    MaxYaw = 360.0 ! No shutdown in WE_Vw < 5.0 m/s
+            !ELSE 
+            !    MaxYaw = YawSD_Slope * LocalVar%GenSpeedF + Offset ! In Degrees
+            !ENDIF
+            !MaxYaw = max(MaxYaw, 50.0)
+            ! Shutdown?
+            !IF (LocalVar%GenSpeedF > CntrPar%PC_RefSpd*1.2 .AND. LocalVar%Time > 120.0) THEN
+            !    LocalVar%SD  = .TRUE.
+            !ELSEIF (SD_BlPitchF > CntrPar%SD_MaxPit .AND. LocalVar%Time > 120.0) THEN
+            !    LocalVar%SD  = .TRUE.
+            !ELSEIF (ABS(SD_YawErrF) > MaxYaw*D2R .AND. LocalVar%Time > 30.0) THEN 
+            !    LocalVar%SD  = .TRUE.
+            !ELSE
+            !    LocalVar%SD  = .FALSE.
+            !ENDIF
         ENDIF
 
         ! Pitch Blades to 90 degrees at max pitch rate if in shutdown mode
@@ -329,6 +371,43 @@ CONTAINS
         ELSE
             Shutdown = LocalVar%PC_PitComT
         ENDIF
+
+        ! Pitch Blades to 90 degrees at max pitch rate if in shutdown mode
+        !IF (LocalVar%SD) THEN
+        !    
+        !    ! E-stop - Pitch-to-stall (downwind, Below Rated)
+        !    IF (( (downwind) .AND. (LocalVar%GenTq < 0.9*CntrPar%VS_ArSatTq) .AND. &
+        !        (LocalVar%BlPitch(1) < 2.0*D2R) ) .OR. (SD_p2s) ) THEN
+
+        !        Shutdown = LocalVar%BlPitch(1) - CntrPar%PC_MaxRat*LocalVar%DT
+        !        LocalVar%PC_MinPit = -90*D2R
+            
+        !        SD_p2s = .TRUE.
+        !        ! SD_time = SD_time + LocalVar%DT
+        !        ! SD_slope = - (CntrPar%PC_RefSpd / 30.0)
+        !        ! LocalVar%SD_RefSpd = SD_slope*SD_time + CntrPar%PC_RefSpd
+        !        ! LocalVar%SD_RefSpd = max(LocalVar%SD_RefSpd, 0.0)
+
+        !    ! E-stop - Pitch-to-feather (Upwind)
+        !    ELSEIF (LocalVar%BlPitch(1) > CntrPar%SD_MaxPit) THEN
+        !        Shutdown = LocalVar%BlPitch(1) + CntrPar%PC_MaxRat*LocalVar%DT
+            
+        !    ELSE
+        !        ! "Normal" shutdown
+        !        SD_time = SD_time + LocalVar%DT
+        !        SD_slope = - (CntrPar%PC_RefSpd / 30.0)
+        !        LocalVar%SD_RefSpd = SD_slope*SD_time + CntrPar%PC_RefSpd
+        !        LocalVar%SD_RefSpd = max(LocalVar%SD_RefSpd, 0.0)
+                    
+        !        Shutdown = LocalVar%PC_PitComT
+        !    ENDIF
+
+        !    IF (MODULO(LocalVar%Time, 10.0) == 0) THEN
+        !        print *, ' ** SHUTDOWN MODE **'
+        !    ENDIF
+        !ELSE
+        !    Shutdown = LocalVar%PC_PitComT
+        !ENDIF
 
         
     END FUNCTION Shutdown

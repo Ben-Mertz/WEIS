@@ -4,9 +4,10 @@ def assign_ROSCO_values(wt_opt, modeling_options, control):
     wt_opt['tune_rosco_ivc.PC_zeta']       = control['pitch']['PC_zeta']
     wt_opt['tune_rosco_ivc.VS_omega']      = control['torque']['VS_omega']
     wt_opt['tune_rosco_ivc.VS_zeta']       = control['torque']['VS_zeta']
-    if modeling_options['Level3']['ROSCO']['Flp_Mode'] > 0:
+    if modeling_options['Level3']['ROSCO']['DAC_Mode'] > 0:
         wt_opt['tune_rosco_ivc.Flp_omega']      = control['dac']['Flp_omega']
         wt_opt['tune_rosco_ivc.Flp_zeta']       = control['dac']['Flp_zeta']
+        wt_opt['tune_rosco_ivc.dac_type']       = modeling_options['WISDEM']['RotorSE']['dac_type']
     if 'IPC' in control.keys():
         wt_opt['tune_rosco_ivc.IPC_KI']      = control['IPC']['IPC_gain_1P']
     # # other optional parameters
@@ -22,9 +23,9 @@ def assign_ROSCO_values(wt_opt, modeling_options, control):
         wt_opt['tune_rosco_ivc.ptfm_freq']     = control['pitch']['fl_feedback']['ptfm_freq']
         
     # Check for proper Flp_Mode, print warning
-    if modeling_options['WISDEM']['RotorSE']['n_tab'] > 1 and modeling_options['Level3']['ROSCO']['Flp_Mode'] == 0:
-            raise Exception('A distributed aerodynamic control device is specified in the geometry yaml, but Flp_Mode is zero in the modeling options.')
-    if modeling_options['WISDEM']['RotorSE']['n_tab'] == 1 and modeling_options['Level3']['ROSCO']['Flp_Mode'] > 0:
-            raise Exception('Flp_Mode is non zero in the modeling options, but no distributed aerodynamic control device is specified in the geometry yaml.')
+    if modeling_options['WISDEM']['RotorSE']['n_tab'] > 1 and modeling_options['Level3']['ROSCO']['DAC_Mode'] == 0:
+            raise Exception('A distributed aerodynamic control device is specified in the geometry yaml, but DAC_Mode is zero in the modeling options.')
+    if modeling_options['WISDEM']['RotorSE']['n_tab'] == 1 and modeling_options['Level3']['ROSCO']['DAC_Mode'] > 0:
+            raise Exception('DAC_Mode is non zero in the modeling options, but no distributed aerodynamic control device is specified in the geometry yaml.')
 
     return wt_opt

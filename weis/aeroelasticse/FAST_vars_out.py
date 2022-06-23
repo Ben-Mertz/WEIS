@@ -1438,7 +1438,7 @@ ServoDyn['TTMD_XQD']          = False     # (m/s); Tower X TMD velocity; Relativ
 ServoDyn['TTMD_YQ']           = False     # (m); Tower Y TMD position (displacement); Relative to rest position
 ServoDyn['TTMD_YQD']          = False     # (m/s); Tower Y TMD velocity; Relative to tower
 
-# Flap outputs
+# Distributed Aerodynamic Control (DAC) outputs
 ServoDyn['BLFLAP1']          = False     # (m/s); Tower Y TMD velocity; Relative to tower
 ServoDyn['BLFLAP2']          = False     # (m/s); Tower Y TMD velocity; Relative to tower
 ServoDyn['BLFLAP3']          = False     # (m/s); Tower Y TMD velocity; Relative to tower

@@ -367,7 +367,7 @@ CONTAINS
 
     END FUNCTION FloatingFeedback
 !-------------------------------------------------------------------------------------------------------------------------------
-    SUBROUTINE FlapControl(avrSWAP, CntrPar, LocalVar, objInst)
+    SUBROUTINE AeroControl(avrSWAP, CntrPar, LocalVar, objInst)
         ! Yaw rate controller
         !       Y_ControlMode = 0, No yaw control
         !       Y_ControlMode = 1, Simple yaw rate control using yaw drive
@@ -386,38 +386,38 @@ CONTAINS
         REAL(8), SAVE                             :: RootMyb_Last(3)
         REAL(8)                                   :: RootMyb_VelErr(3)
 
-        ! Flap control
-        IF (CntrPar%Flp_Mode >= 1) THEN
-            IF ((LocalVar%iStatus == 0) .AND. (CntrPar%Flp_Mode >= 1)) THEN
+        ! Distributed Aerodynamic Control
+        IF (CntrPar%DAC_Mode >= 1) THEN
+            IF ((LocalVar%iStatus == 0) .AND. (CntrPar%DAC_Mode >= 1)) THEN
                 RootMyb_Last(1) = 0 - LocalVar%rootMOOP(1)
                 RootMyb_Last(2) = 0 - LocalVar%rootMOOP(2)
                 RootMyb_Last(3) = 0 - LocalVar%rootMOOP(3)
-                ! Initial Flap angle
-                LocalVar%Flp_Angle(1) = CntrPar%Flp_Angle
-                LocalVar%Flp_Angle(2) = CntrPar%Flp_Angle
-                LocalVar%Flp_Angle(3) = CntrPar%Flp_Angle
+                ! Initial DAC Param
+                LocalVar%dac_param(1) = CntrPar%dac_param
+                LocalVar%dac_param(2) = CntrPar%dac_param
+                LocalVar%dac_param(3) = CntrPar%dac_param
                 ! Initialize filter
                 RootMOOP_F(1) = SecLPFilter(LocalVar%rootMOOP(1),LocalVar%DT, CntrPar%F_FlpCornerFreq, CntrPar%F_FlpDamping, LocalVar%iStatus, .FALSE.,objInst%instSecLPF)
                 RootMOOP_F(2) = SecLPFilter(LocalVar%rootMOOP(2),LocalVar%DT, CntrPar%F_FlpCornerFreq, CntrPar%F_FlpDamping, LocalVar%iStatus, .FALSE.,objInst%instSecLPF)
                 RootMOOP_F(3) = SecLPFilter(LocalVar%rootMOOP(3),LocalVar%DT, CntrPar%F_FlpCornerFreq, CntrPar%F_FlpDamping, LocalVar%iStatus, .FALSE.,objInst%instSecLPF)
                 ! Initialize controller
-                IF (CntrPar%Flp_Mode == 2) THEN
-                    LocalVar%Flp_Angle(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%Flp_Angle(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, 0.05, -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, .TRUE., objInst%instPI)
+                IF (CntrPar%DAC_Mode == 2) THEN
+                    LocalVar%dac_param(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%dac_param(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, 0.05, -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, .TRUE., objInst%instPI)
                 ENDIF
             
-            ! Steady flap angle
-            ELSEIF (CntrPar%Flp_Mode == 1) THEN
-                LocalVar%Flp_Angle(1) = LocalVar%Flp_Angle(1) 
-                LocalVar%Flp_Angle(2) = LocalVar%Flp_Angle(2) 
-                LocalVar%Flp_Angle(3) = LocalVar%Flp_Angle(3) 
+            ! Steady Aero Control Param
+            ELSEIF (CntrPar%DAC_Mode == 1) THEN
+                LocalVar%dac_param(1) = LocalVar%dac_param(1) 
+                LocalVar%dac_param(2) = LocalVar%dac_param(2) 
+                LocalVar%dac_param(3) = LocalVar%dac_param(3) 
                 ! IF (MOD(LocalVar%Time,10.0) == 0) THEN
-                !     LocalVar%Flp_Angle(1) = LocalVar%Flp_Angle(1) + 1*D2R
-                !     LocalVar%Flp_Angle(2) = LocalVar%Flp_Angle(2) + 1*D2R
-                !     LocalVar%Flp_Angle(3) = LocalVar%Flp_Angle(3) + 1*D2R
+                !     LocalVar%dac_param(1) = LocalVar%dac_param(1) + 1*D2R
+                !     LocalVar%dac_param(2) = LocalVar%dac_param(2) + 1*D2R
+                !     LocalVar%dac_param(3) = LocalVar%dac_param(3) + 1*D2R
                 ! ENDIF
 
-            ! PII flap control
-            ELSEIF (CntrPar%Flp_Mode == 2) THEN
+            ! PII Aero control
+            ELSEIF (CntrPar%DAC_Mode == 2) THEN
                 DO K = 1,LocalVar%NumBl
                     ! LPF Blade root bending moment
                     RootMOOP_F(K) = SecLPFilter(LocalVar%rootMOOP(K),LocalVar%DT, CntrPar%F_FlpCornerFreq, CntrPar%F_FlpDamping, LocalVar%iStatus, .FALSE.,objInst%instSecLPF)
@@ -426,22 +426,60 @@ CONTAINS
                     RootMyb_Vel(K) = (RootMOOP_F(K) - RootMyb_Last(K))/LocalVar%DT
                     RootMyb_VelErr(K) = 0 - RootMyb_Vel(K)
                     
-                    ! Find flap angle command - includes an integral term to encourage zero flap angle
-                    LocalVar%Flp_Angle(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%Flp_Angle(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, 0.05, -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, .FALSE., objInst%instPI)
+                    ! Find DAC parameter command - includes an integral term to encourage zero DAC param
+                    LocalVar%dac_param(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%dac_param(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, 0.05, -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, .FALSE., objInst%instPI)
                     ! Saturation Limits
-                    LocalVar%Flp_Angle(K) = saturate(LocalVar%Flp_Angle(K), -CntrPar%Flp_MaxPit, CntrPar%Flp_MaxPit)
+                    LocalVar%dac_param(K) = saturate(LocalVar%dac_param(K), -CntrPar%Flp_MaxPit, CntrPar%Flp_MaxPit)
                     
                     ! Save some data for next iteration
                     RootMyb_Last(K) = RootMOOP_F(K)
                 END DO
+            ! Shutdown Aero control (logic only for LE Spoilers currently)
+            ELSEIF (CntrPar%DAC_Mode == 3) THEN
+                DO K = 1,LocalVar%NumBl
+                    IF (LocalVar%SD) THEN
+                    
+                        ! Set to max extension
+                        LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                    ELSE
+                        LocalVar%dac_param(K) = 0.0
+                    ENDIF
+                    !IF (LocalVar%Time >= 180.0) THEN
+                    
+                        ! Set to max extension
+                    !    LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                    !ELSE
+                    !    LocalVar%dac_param(K) = 0.0
+                    !ENDIF
+                END DO
+            ELSEIF (CntrPar%DAC_Mode == 4) THEN
+                DO K = 1,LocalVar%NumBl
+                    IF (LocalVar%Time >= 622.0 .AND. LocalVar%Time < 623.0) THEN
+                    
+                        ! Set to max extension
+                        LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                    ELSEIF (LocalVar%Time >= 623.0) THEN
+                        LocalVar%dac_param(K) = 0.0
+                    ELSE
+                        LocalVar%dac_param(K) = 0.0
+                    ENDIF
+                END DO
             ENDIF
 
             ! Send to AVRSwap
-            avrSWAP(120) = LocalVar%Flp_Angle(1) * R2D   ! Needs to be sent to openfast in degrees
-            avrSWAP(121) = LocalVar%Flp_Angle(2) * R2D   ! Needs to be sent to openfast in degrees
-            avrSWAP(122) = LocalVar%Flp_Angle(3) * R2D   ! Needs to be sent to openfast in degrees
+            ! For TE Flaps
+            IF (CntrPar%dac_type < 1) THEN
+                avrSWAP(120) = LocalVar%dac_param(1) * R2D   ! Needs to be sent to openfast in degrees
+                avrSWAP(121) = LocalVar%dac_param(2) * R2D   ! Needs to be sent to openfast in degrees
+                avrSWAP(122) = LocalVar%dac_param(3) * R2D   ! Needs to be sent to openfast in degrees
+            !For LE Spoilers
+            ELSE
+                avrSWAP(120) = LocalVar%dac_param(1)   ! Leave in default units
+                avrSWAP(121) = LocalVar%dac_param(2)   ! Leave in default units
+                avrSWAP(122) = LocalVar%dac_param(3)   ! Leave in default units
+            ENDIF
         ELSE
             RETURN
         ENDIF
-    END SUBROUTINE FlapControl
+    END SUBROUTINE AeroControl
 END MODULE Controllers

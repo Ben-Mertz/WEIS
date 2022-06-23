@@ -586,7 +586,7 @@ properties:
                 type: object
                 description: Control parameters for distributed aerodynamic control devices
                 required:
-                    - Flp_omega
+                    - Flp_omega #TODO BEM: Replace Flp designation to be more generic for different DAC devices 
                     - Flp_zeta
                 properties:
                     Flp_omega:
@@ -601,7 +601,6 @@ properties:
                         unit: none
                         minimum: 0
                         maximum: 5
-
             user_defined_SS_1: &uss
                 type: object
                 description: User defined state-space linear controllers within ROSCO, only 1 for now
