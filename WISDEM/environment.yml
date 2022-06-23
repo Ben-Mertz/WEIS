@@ -14,7 +14,7 @@ dependencies:
   - mpi4py
   - nlopt
   - numpy
-  - openmdao
+  - openmdao>=3.4, <3.17
   - openpyxl
   - pandas
   - pip
@@ -27,13 +27,15 @@ dependencies:
   - ruamel_yaml
   - scipy
   - setuptools
+  - simpy
   - sortedcontainers
+  - statsmodels
   - swig
   - pip:
-    - simpy
     - marmot-agents
 # Needs to be done outside of environment file:
 #  - m2w64-toolchain # [win]
 #  - libpython # [win]
 #  - compilers # [not win]
 #  - petsc4py # [not win]
+#  - pyoptsparse # [not win]

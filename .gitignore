@@ -108,7 +108,19 @@ Thumbs.db
 *.sum
 *.ech
 *.dbg
+*/CMakeCache.txt
+*.check_cache
 
 # Temp
 *Temp*
 *temp*
+
+outputs/
+results/
+
+# Turbsim
+wind/
+
+BEM/
+none/
+steady_state/

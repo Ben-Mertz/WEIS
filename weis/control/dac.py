@@ -241,8 +241,8 @@ class RunXFOIL(ExplicitComponent):
             self.dac_model = dac_model = self.options['modeling_options']['Level3']['ROSCO']['DAC_Model']
 
         # Use openfast cores for parallelization of xfoil 
-        FASTpref = self.options['modeling_options']['openfast']
-        xfoilpref = self.options['modeling_options']['xfoil']
+        xfoilpref = self.options['modeling_options']['Level3']['xfoil']
+        self.xfoil_path = xfoilpref['path']
 
         try:
             if xfoilpref['run_parallel']:
@@ -253,7 +253,7 @@ class RunXFOIL(ExplicitComponent):
             self.cores = 1
         
         if MPI and self.options['modeling_options']['Level3']['flag'] and self.options['opt_options']['driver']['optimization']['flag']:
-            self.mpi_comm_map_down = FASTpref['analysis_settings']['mpi_comm_map_down']
+            self.mpi_comm_map_down = self.options['modeling_options']['General']['openfast_configuration']['mpi_comm_map_down']
 
         # Inputs blade outer shape
         self.add_input('s',          val=np.zeros(n_span),                      desc='1D array of the non-dimensional spanwise grid defined along blade axis (0-blade root, 1-blade tip)')
@@ -767,6 +767,7 @@ def get_dac_polars(run_xfoil_params, afi):
             # eta = blade['outer_shape_bem']['chord']['grid'][afi]
             c   = chord[afi]  # blade chord length at cross section
             s   = span[afi]
+            cr  = chord[afi] / rad_loc[afi]
             rR  = rad_loc[afi] / rad_loc[-1]  # non-dimensional blade radial station at cross section in the rotor coordinate system
             Re_loc_af[:,ind] = c* maxTS * rR / KinVisc
             Ma_loc_af[:,ind] = maxTS * rR / SpdSound
@@ -788,8 +789,8 @@ def get_dac_polars(run_xfoil_params, afi):
                 data = general_dac_mod(aoa,cl_interp_dac_af[:,0,ind],cd_interp_dac_af[:,0,ind],cm_interp_dac_af[:,0,ind],clmax_ratio,stall_shift,LD_ratio,alpha0_shift,S_ratio,CD0_shift)
             
             oldpolar= Polar(Re_loc_af[0,ind], data[:,0],data[:,1],data[:,2],data[:,4]) # data[:,0] is alpha, data[:,1] is Cl, data[:,2] is Cd, data[:,4] is Cm
-            polar3d = oldpolar.correction3D(rR,c/R,run_xfoil_params['tsr']) # Apply 3D corrections (made sure to change the r/R, c/R, and tsr values appropriately when calling AFcorrections())
-            cdmax   = 1.5
+            polar3d = oldpolar.correction3D(rR,cr,run_xfoil_params['tsr']) # Apply 3D corrections (made sure to change the r/R, c/r, and tsr values appropriately when calling AFcorrections())
+            cdmax   = np.max(data[:,2]) # Keep the same max Cd as before
             polar   = polar3d.extrapolate(cdmax) # Extrapolate polars for alpha between -180 deg and 180 deg
 
             for j in range(run_xfoil_params['n_Re']):
