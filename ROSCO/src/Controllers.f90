@@ -444,13 +444,25 @@ CONTAINS
                     ELSE
                         LocalVar%dac_param(K) = 0.0
                     ENDIF
-                    !IF (LocalVar%Time >= 420.0) THEN
+                    !IF (LocalVar%Time >= 180.0) THEN
                     
                         ! Set to max extension
                     !    LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
                     !ELSE
                     !    LocalVar%dac_param(K) = 0.0
                     !ENDIF
+                END DO
+            ELSEIF (CntrPar%DAC_Mode == 4) THEN
+                DO K = 1,LocalVar%NumBl
+                    IF (LocalVar%Time >= 622.0 .AND. LocalVar%Time < 623.0) THEN
+                    
+                        ! Set to max extension
+                        LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                    ELSEIF (LocalVar%Time >= 623.0) THEN
+                        LocalVar%dac_param(K) = 0.0
+                    ELSE
+                        LocalVar%dac_param(K) = 0.0
+                    ENDIF
                 END DO
             ENDIF
 
