@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
+
 import wisdem.floatingse.mooring as mm
 
 
@@ -9,13 +10,15 @@ class TestMooring(unittest.TestCase):
     def setUp(self):
         self.inputs = {}
         self.outputs = {}
-        self.discrete_inputs = {}
 
         myones = np.ones(1)
         self.inputs["fairlead"] = 10.0 * myones
         self.inputs["fairlead_radius"] = 11.0 * myones
         self.inputs["anchor_radius"] = 250.0 * myones
-        self.inputs["anchor_cost"] = 10.0
+        self.inputs["anchor_mass"] = 100.0 * myones
+        self.inputs["anchor_cost"] = 10.0 * myones
+        self.inputs["anchor_max_vertical_load"] = 1e10
+        self.inputs["anchor_max_lateral_load"] = 1e10
 
         self.inputs["rho_water"] = 1e3
         self.inputs["water_depth"] = 200.0  # 100.0
@@ -33,6 +36,8 @@ class TestMooring(unittest.TestCase):
         opt = {}
         opt["n_attach"] = 3
         opt["n_anchors"] = 6
+        opt["line_anchor"] = ["custom"]  # ["drag_embedment"]
+        opt["line_material"] = ["custom"]  # ["chain"]
 
         self.mymap = mm.Mooring(options=opt, gamma=1.35)
 
@@ -54,20 +59,35 @@ class TestMooring(unittest.TestCase):
 
         npt.assert_almost_equal(self.outputs["operational_heel_restoring_force"][[1, 3, 5]], 0.0, 2)
         self.assertGreater(self.outputs["operational_heel_restoring_force"][0], 0.0)
-        self.assertGreater(self.outputs["operational_heel_restoring_force"][2], 1e3)
-        self.assertGreater(self.outputs["operational_heel_restoring_force"][4], 1e3)
+        self.assertGreater(np.abs(self.outputs["operational_heel_restoring_force"][2]), 1e3)
+        self.assertGreater(np.abs(self.outputs["operational_heel_restoring_force"][4]), 1e3)
 
         npt.assert_almost_equal(self.outputs["survival_heel_restoring_force"][[1, 3, 5]], 0.0, 2)
         self.assertGreater(
             self.outputs["survival_heel_restoring_force"][0], self.outputs["operational_heel_restoring_force"][0]
         )
-        self.assertGreater(self.outputs["survival_heel_restoring_force"][2], 1e3)
+        self.assertGreater(np.abs(self.outputs["survival_heel_restoring_force"][2]), 1e3)
         self.assertGreater(
-            self.outputs["survival_heel_restoring_force"][4], self.outputs["operational_heel_restoring_force"][4]
+            np.abs(self.outputs["survival_heel_restoring_force"][4]),
+            np.abs(self.outputs["operational_heel_restoring_force"][4]),
         )
 
-        self.assertAlmostEqual(self.outputs["mooring_mass"], 6 * 270 * 0.1)
+        self.assertAlmostEqual(self.outputs["mooring_mass"], 6 * 270 * 0.1 + 6 * 100)
         self.assertAlmostEqual(self.outputs["mooring_cost"], 6 * 270 * 0.4 + 6 * 10)
+
+    def testRunMap_MoorProps(self):
+
+        opt = {}
+        opt["n_attach"] = 3
+        opt["n_anchors"] = 6
+        opt["line_anchor"] = ["drag_embedment"]
+        opt["line_material"] = ["chain"]
+
+        mymap = mm.Mooring(options=opt, gamma=1.35)
+
+        mymap.compute(self.inputs, self.outputs)
+        self.assertAlmostEqual(self.outputs["mooring_mass"], 6 * 270 * 199.0 + 6 * 0)
+        self.assertAlmostEqual(self.outputs["mooring_cost"], 6 * 270 * 514.415)
 
 
 def suite():
