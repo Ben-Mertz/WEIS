@@ -8,30 +8,33 @@ USE Constants
 IMPLICIT NONE
 
 TYPE, PUBLIC :: ControlParameters
-    INTEGER(IntKi)                :: LoggingLevel                ! 0 - write no debug files, 1 - write standard output .dbg-file, 2 - write standard output .dbg-file and complete avrSWAP-array .dbg2-file
-    INTEGER(IntKi)                :: F_LPFType                   ! Low pass filter on the rotor and generator speed {1 - first-order low-pass filter, 2 - second-order low-pass filter}, [rad/s]
-    INTEGER(IntKi)                :: F_NotchType                 ! Notch on the measured generator speed {0 - disable, 1 - enable}
-    REAL(DbKi)                    :: F_LPFCornerFreq             ! Corner frequency (-3dB point) in the first-order low-pass filter, [rad/s]
-    REAL(DbKi)                    :: F_LPFDamping                ! Damping coefficient [used only when F_FilterType = 2]
-    REAL(DbKi)                    :: F_NotchCornerFreq           ! Natural frequency of the notch filter, [rad/s]
+    INTEGER(IntKi)                :: LoggingLevel                 ! 0 - write no debug files, 1 - write standard output .dbg-file, 2 - write standard output .dbg-file and complete avrSWAP-array .dbg2-file
+    INTEGER(IntKi)                :: F_LPFType                    ! Low pass filter on the rotor and generator speed {1 - first-order low-pass filter, 2 - second-order low-pass filter}, [rad/s]
+    INTEGER(IntKi)                :: F_NotchType                  ! Notch on the measured generator speed {0 - disable, 1 - enable}
+    REAL(DbKi)                    :: F_LPFCornerFreq              ! Corner frequency (-3dB point) in the first-order low-pass filter, [rad/s]
+    REAL(DbKi)                    :: F_LPFDamping                 ! Damping coefficient [used only when F_FilterType = 2]
+    REAL(DbKi)                    :: F_NotchCornerFreq            ! Natural frequency of the notch filter, [rad/s]
     REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: F_NotchBetaNumDen           ! These two notch damping values (numerator and denominator) determines the width and depth of the notch
-    REAL(DbKi)                    :: F_SSCornerFreq              ! Corner frequency (-3dB point) in the first order low pass filter for the setpoint smoother [rad/s]
-    REAL(DbKi)                    :: F_WECornerFreq              ! Corner frequency (-3dB point) in the first order low pass filter for the wind speed estimate [rad/s]
-    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: F_FlCornerFreq              ! Corner frequency (-3dB point) in the second order low pass filter of the tower-top fore-aft motion for floating feedback control [rad/s].
-    REAL(DbKi)                    :: F_FlHighPassFreq            ! Natural frequency of first-roder high-pass filter for nacelle fore-aft motion [rad/s].
-    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: F_FlpCornerFreq             ! Corner frequency (-3dB point) in the second order low pass filter of the blade root bending moment for flap control [rad/s].
-    REAL(DbKi)                    :: FA_HPFCornerFreq            ! Corner frequency (-3dB point) in the high-pass filter on the fore-aft acceleration signal [rad/s]
-    REAL(DbKi)                    :: FA_IntSat                   ! Integrator saturation (maximum signal amplitude contrbution to pitch from FA damper), [rad]
-    REAL(DbKi)                    :: FA_KI                       ! Integral gain for the fore-aft tower damper controller, -1 = off / >0 = on [rad s/m]
-    INTEGER(IntKi)                :: IPC_ControlMode             ! Turn Individual Pitch Control (IPC) for fatigue load reductions (pitch contribution) {0 - off, 1 - 1P reductions, 2 - 1P+2P reductions}
-    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_Vramp                   ! Wind speeds for IPC cut-in sigma function [m/s]
-    REAL(DbKi)                    :: IPC_IntSat                  ! Integrator saturation (maximum signal amplitude contrbution to pitch from IPC)
-    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_KP                      ! Integral gain for the individual pitch controller, [-].
-    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_KI                      ! Integral gain for the individual pitch controller, [-].
-    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_aziOffset               ! Phase offset added to the azimuth angle for the individual pitch controller, [rad].
-    REAL(DbKi)                    :: IPC_CornerFreqAct           ! Corner frequency of the first-order actuators model, to induce a phase lag in the IPC signal {0 - Disable}, [rad/s]
-    INTEGER(IntKi)                :: PC_ControlMode              ! Blade pitch control mode {0 - No pitch, fix to fine pitch, 1 - active PI blade pitch control}
-    INTEGER(IntKi)                :: PC_GS_n                     ! Amount of gain-scheduling table entries
+    REAL(DbKi)                    :: F_SSCornerFreq               ! Corner frequency (-3dB point) in the first order low pass filter for the setpoint smoother [rad/s]
+    REAL(DbKi)                    :: F_FlDamping                  ! Damping constant in the first order low pass filter of the tower-top fore-aft motion for floating feedback control [-].
+    
+    REAL(DbKi)                    :: F_WECornerFreq               ! Corner frequency (-3dB point) in the first order low pass filter for the wind speed estimate [rad/s]
+    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: F_FlCornerFreq   ! Corner frequency (-3dB point) in the second order low pass filter of the tower-top fore-aft motion for floating feedback control [rad/s].
+    !REAL(DbKi)                    :: F_FlCornerFreq              ! Corner frequency (-3dB point) in the second order low pass filter of the tower-top fore-aft motion for floating feedback control [rad/s].
+    REAL(DbKi)                    :: F_FlHighPassFreq             ! Natural frequency of first-roder high-pass filter for nacelle fore-aft motion [rad/s].
+    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: F_DACCornerFreq  ! Corner frequency (-3dB point) in the second order low pass filter of the blade root bending moment for DAC control [rad/s].
+    REAL(DbKi)                    :: FA_HPFCornerFreq             ! Corner frequency (-3dB point) in the high-pass filter on the fore-aft acceleration signal [rad/s]
+    REAL(DbKi)                    :: FA_IntSat                    ! Integrator saturation (maximum signal amplitude contrbution to pitch from FA damper), [rad]
+    REAL(DbKi)                    :: FA_KI                        ! Integral gain for the fore-aft tower damper controller, -1 = off / >0 = on [rad s/m]
+    INTEGER(IntKi)                :: IPC_ControlMode              ! Turn Individual Pitch Control (IPC) for fatigue load reductions (pitch contribution) {0 - off, 1 - 1P reductions, 2 - 1P+2P reductions}
+    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_Vramp        ! Wind speeds for IPC cut-in sigma function [m/s]
+    REAL(DbKi)                    :: IPC_IntSat                   ! Integrator saturation (maximum signal amplitude contrbution to pitch from IPC)
+    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_KP           ! Integral gain for the individual pitch controller, [-].
+    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_KI           ! Integral gain for the individual pitch controller, [-].
+    REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: IPC_aziOffset    ! Phase offset added to the azimuth angle for the individual pitch controller, [rad].
+    REAL(DbKi)                    :: IPC_CornerFreqAct            ! Corner frequency of the first-order actuators model, to induce a phase lag in the IPC signal {0 - Disable}, [rad/s]
+    INTEGER(IntKi)                :: PC_ControlMode               ! Blade pitch control mode {0 - No pitch, fix to fine pitch, 1 - active PI blade pitch control}
+    INTEGER(IntKi)                :: PC_GS_n                      ! Amount of gain-scheduling table entries
     REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: PC_GS_angles                ! Gain-schedule table - pitch angles
     REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: PC_GS_KP                    ! Gain-schedule table - pitch controller kp gains
     REAL(DbKi), DIMENSION(:), ALLOCATABLE     :: PC_GS_KI                    ! Gain-schedule table - pitch controller ki gains
@@ -96,11 +99,12 @@ TYPE, PUBLIC :: ControlParameters
     REAL(DbKi)                    :: SD_CornerFreq               ! Cutoff Frequency for first order low-pass filter for blade pitch angle, [rad/s]
     INTEGER(IntKi)                :: Fl_Mode                     ! Floating specific feedback mode {0 - no nacelle velocity feedback, 1 - nacelle velocity feedback}
     REAL(DbKi)                    :: Fl_Kp                       ! Nacelle velocity proportional feedback gain [s]
-    INTEGER(IntKi)                :: Flp_Mode                    ! Flap actuator mode {0 - off, 1 - fixed flap position, 2 - PI flap control}
-    REAL(DbKi)                    :: Flp_Angle                   ! Fixed flap angle (degrees)
-    REAL(DbKi)                    :: Flp_Kp                      ! PI flap control proportional gain
-    REAL(DbKi)                    :: Flp_Ki                      ! PI flap control integral gain
-    REAL(DbKi)                    :: Flp_MaxPit                  ! Maximum (and minimum) flap pitch angle [rad]
+    INTEGER(IntKi)                :: DAC_Mode                    ! DAC actuator mode {0 - off, 1 - fixed DAC position, 2 - PI DAC control, 3 - Cyclic DAC Control}
+    INTEGER(IntKi)                :: DAC_Type                    ! DAC type {0 - TE Flaps, 1 - LEMS}
+    REAL(DbKi)                    :: DAC_Param                   ! Fixed DAC Parameter Value (degrees for angles or default units for other devices)
+    REAL(DbKi)                    :: DAC_Kp                      ! PI DAC control proportional gain
+    REAL(DbKi)                    :: DAC_Ki                      ! PI DAC control integral gain
+    REAL(DbKi)                    :: DAC_Max                     ! Maximum (and minimum) DAC Parameter value [rad for angles or default units for other devices]
     CHARACTER(1024)               :: OL_Filename                 ! Input file with open loop timeseries
     INTEGER(IntKi)                :: OL_Mode                     ! Open loop control mode {0 - no open loop control, 1 - open loop control vs. time, 2 - open loop control vs. wind speed}
     INTEGER(IntKi)                :: Ind_Breakpoint              ! The column in OL_Filename that contains the breakpoint (time if OL_Mode = 1)
@@ -229,6 +233,7 @@ TYPE, PUBLIC :: LocalVariables
     REAL(DbKi)                    :: VS_SpdErrBr                 ! Current speed error for region 1.5 PI controller (generator torque control) [rad/s].
     REAL(DbKi)                    :: VS_SpdErr                   ! Current speed error for tip-speed-ratio tracking controller (generator torque control) [rad/s].
     INTEGER(IntKi)                :: VS_State                    ! State of the torque control system
+    REAL(DbKi)                    :: HorWindV_F                  ! Filtered wind speed [m/s]
     REAL(DbKi)                    :: VS_Rgn3Pitch                ! Pitch angle at which the state machine switches to region 3, [rad].
     REAL(DbKi)                    :: WE_Vw                       ! Estimated wind speed [m/s]
     REAL(DbKi)                    :: WE_Vw_F                     ! Filtered estimated wind speed [m/s]
@@ -241,10 +246,11 @@ TYPE, PUBLIC :: LocalVariables
     REAL(DbKi)                    :: Y_MErr                      ! Measured yaw error, measured + setpoint [rad].
     REAL(DbKi)                    :: Y_YawEndT                   ! Yaw end time [s]. Indicates the time up until which yaw is active with a fixed rate
     LOGICAL                       :: SD                          ! Shutdown, .FALSE. if inactive, .TRUE. if active
-    REAL(DbKi)                    :: Fl_PitCom                   ! Shutdown, .FALSE. if inactive, .TRUE. if active
+    REAL(4)                       :: SD_RefSpd                   ! Generator reference speed during shutdown
+    REAL(DbKi)                    :: Fl_PitCom                   ! Floating pitch command
     REAL(DbKi)                    :: NACIMU_FA_AccF              ! None
     REAL(DbKi)                    :: FA_AccF                     ! None
-    REAL(DbKi)                    :: Flp_Angle(3)                ! Flap Angle (rad)
+    REAL(DbKi)                    :: DAC_Param(3)                ! DAC Parameter (rad for angles or default units for other devices)
     REAL(DbKi)                    :: RootMyb_Last(3)             ! Last blade root bending moment (Nm)
     INTEGER(IntKi)                :: ACC_INFILE_SIZE             ! Length of parameter input filename
     CHARACTER, DIMENSION(:), ALLOCATABLE     :: ACC_INFILE                  ! Parameter input filename

@@ -92,13 +92,13 @@ class Outputs_2_Screen(om.ExplicitComponent):
         self.add_input("blade_mass", val=0.0, units="kg")
         self.add_input("lcoe", val=0.0, units="USD/MW/h")
         self.add_input("My_std", val=0.0, units="N*m")
-        self.add_input("flp1_std", val=0.0, units="deg")
+        self.add_input("DAC1_std", val=0.0, units="deg")
         self.add_input("PC_omega", val=0.0, units="rad/s")
         self.add_input("PC_zeta", val=0.0)
         self.add_input("VS_omega", val=0.0, units="rad/s")
         self.add_input("VS_zeta", val=0.0)
-        self.add_input("Flp_omega", val=0.0, units="rad/s")
-        self.add_input("Flp_zeta", val=0.0)
+        self.add_input("DAC_omega", val=0.0, units="rad/s")
+        self.add_input("DAC_zeta", val=0.0)
         self.add_input("tip_deflection", val=0.0, units="m")
 
     def compute(self, inputs, outputs):

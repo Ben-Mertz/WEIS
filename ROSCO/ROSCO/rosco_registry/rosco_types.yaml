@@ -91,9 +91,9 @@ ControlParameters:
     F_FlHighPassFreq:
       <<: *real
       description: Natural frequency of first-roder high-pass filter for nacelle fore-aft motion [rad/s].
-    F_FlpCornerFreq:
+    F_DACCornerFreq:
       <<: *real
-      description: Corner frequency (-3dB point) in the second order low pass filter of the blade root bending moment for flap control [rad/s].
+      description: Corner frequency (-3dB point) in the second order low pass filter of the blade root bending moment for DAC control [rad/s].
       allocatable: True
     
     # Tower fore-aft damping
@@ -364,22 +364,25 @@ ControlParameters:
       <<: *real
       description: Nacelle velocity proportional feedback gain [s]
     
-    # Trailing edge flaps
-    Flp_Mode:
+    # Distributed Aerodynamic Control (i.e. Trailing edge flaps or LEMS)
+    DAC_Mode:
       <<: *integer
-      description: Flap actuator mode {0 - off, 1 - fixed flap position, 2 - PI flap control}
-    Flp_Angle:
+      description: DAC actuator mode {0 - off, 1 - fixed DAC Parameter Value, 2 - PI DAC control}
+    DAC_Type:
+      <<: *integer
+      description: Type of DAC Device {0 - TE Flaps, 1 - LEMS}  
+    DAC_Param:
       <<: *real
-      description: Fixed flap angle (degrees)
-    Flp_Kp:
+      description: Fixed DAC setting (angles - degrees or other default units)
+    DAC_Kp:
       <<: *real
-      description: PI flap control proportional gain 
-    Flp_Ki:
+      description: PI DAC control proportional gain 
+    DAC_Ki:
       <<: *real
-      description: PI flap control integral gain 
-    Flp_MaxPit:
+      description: PI DAC control integral gain 
+    DAC_Max:
       <<: *real
-      description: Maximum (and minimum) flap pitch angle [rad]
+      description: Maximum (and minimum) DAC parameter value (flap pitch angle [rad] or default units for other DAC devices)
     
     # Open-loop Control
     OL_Filename:
@@ -842,9 +845,9 @@ LocalVariables:
       <<: *real 
     FA_AccF:
       <<: *real 
-    Flp_Angle:
+    DAC_Param:
       <<: *real 
-      description: Flap Angle (rad)
+      description: DAC Parameter Value (Flap Angle (rad) or default units for other DAC devices)
       size: 3
     RootMyb_Last:
       <<: *real 

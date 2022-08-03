@@ -109,7 +109,7 @@ def assign_blade_values(wt_opt, modeling_options, blade):
     # Function to assign values to the openmdao group Blade
     wt_opt = assign_outer_shape_bem_values(wt_opt, modeling_options, blade["outer_shape_bem"])
     wt_opt = assign_internal_structure_2d_fem_values(wt_opt, modeling_options, blade["internal_structure_2d_fem"])
-    wt_opt = assign_te_flaps_values(wt_opt, modeling_options, blade)
+    wt_opt = assign_DAC_values(wt_opt, modeling_options, blade)
 
     return wt_opt
 
@@ -538,104 +538,200 @@ def assign_internal_structure_2d_fem_values(wt_opt, modeling_options, internal_s
     return wt_opt
 
 
-def assign_te_flaps_values(wt_opt, modeling_options, blade):
-    # Function to assign the trailing edge flaps data to the openmdao data structure
-    if modeling_options["WISDEM"]["RotorSE"]["n_te_flaps"] > 0:
-        n_te_flaps = modeling_options["WISDEM"]["RotorSE"]["n_te_flaps"]
-        for i in range(n_te_flaps):
-            wt_opt["dac_ivc.te_flap_start"][i] = blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
-            wt_opt["dac_ivc.te_flap_end"][i] = blade["aerodynamic_control"]["te_flaps"][i]["span_end"]
-            wt_opt["dac_ivc.chord_start"][i] = blade["aerodynamic_control"]["te_flaps"][i]["chord_start"]
-            wt_opt["dac_ivc.delta_max_pos"][i] = blade["aerodynamic_control"]["te_flaps"][i]["delta_max_pos"]
-            wt_opt["dac_ivc.delta_max_neg"][i] = blade["aerodynamic_control"]["te_flaps"][i]["delta_max_neg"]
+def assign_DAC_values(wt_opt, modeling_options, blade):
+    # Function to assign the DAC data to the openmdao data structure
+    if modeling_options["WISDEM"]["RotorSE"]["n_DAC"] > 0:
+        n_DAC = modeling_options["WISDEM"]["RotorSE"]["n_DAC"]
+        for i in range(n_DAC):
+            # print("Check: ",blade["aerodynamic_control"].keys())
+            if "te_flaps" in blade["aerodynamic_control"].keys():
+                wt_opt["DAC_ivc.DAC_start"][i] = blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
+                wt_opt["DAC_ivc.DAC_end"][i] = blade["aerodynamic_control"]["te_flaps"][i]["span_end"]
+                wt_opt["DAC_ivc.chord_start"][i] = blade["aerodynamic_control"]["te_flaps"][i]["chord_start"]
+                wt_opt["DAC_ivc.delta_max_pos"][i] = blade["aerodynamic_control"]["te_flaps"][i]["delta_max_pos"]
+                wt_opt["DAC_ivc.delta_max_neg"][i] = blade["aerodynamic_control"]["te_flaps"][i]["delta_max_neg"]
 
-            wt_opt["dac_ivc.te_flap_ext"] = (
-                blade["aerodynamic_control"]["te_flaps"][i]["span_end"]
-                - blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
-            )
-            # wt_opt['dac_ivc.te_flap_end'] = blade['aerodynamic_control']['te_flaps'][i]['span_end']
+                wt_opt["DAC_ivc.DAC_ext"] = (
+                    blade["aerodynamic_control"]["te_flaps"][i]["span_end"]
+                    - blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
+                )
+                # wt_opt['DAC_ivc.DAC_end'] = blade['aerodynamic_control'][DAC'][i]['span_end']
 
-            # Checks for consistency
-            if blade["aerodynamic_control"]["te_flaps"][i]["span_start"] < 0.0:
-                raise ValueError(
-                    "Error: the start along blade span of the trailing edge flap number "
-                    + str(i)
-                    + " is defined smaller than 0, which corresponds to blade root. Please check the yaml input."
-                )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["span_start"] > 1.0:
-                raise ValueError(
-                    "Error: the start along blade span of the trailing edge flap number "
-                    + str(i)
-                    + " is defined bigger than 1, which corresponds to blade tip. Please check the yaml input."
-                )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["span_end"] < 0.0:
-                raise ValueError(
-                    "Error: the end along blade span of the trailing edge flap number "
-                    + str(i)
-                    + " is defined smaller than 0, which corresponds to blade root. Please check the yaml input."
-                )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["span_end"] > 1.0:
-                raise ValueError(
-                    "Error: the end along blade span of the trailing edge flap number "
-                    + str(i)
-                    + " is defined bigger than 1, which corresponds to blade tip. Please check the yaml input."
-                )
-            elif (
-                blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
-                == blade["aerodynamic_control"]["te_flaps"][i]["span_end"]
-            ):
-                raise ValueError(
-                    "Error: the start and end along blade span of the trailing edge flap number "
-                    + str(i)
-                    + " are defined equal. Please check the yaml input."
-                )
-            elif i > 0:
-                if (
-                    blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
-                    < blade["aerodynamic_control"]["te_flaps"][i - 1]["span_end"]
-                ):
+                # Checks for consistency
+                if blade["aerodynamic_control"]["te_flaps"][i]["span_start"] < 0.0:
                     raise ValueError(
                         "Error: the start along blade span of the trailing edge flap number "
                         + str(i)
-                        + " is smaller than the end of the trailing edge flap number "
-                        + str(i - 1)
-                        + ". Please check the yaml input."
+                        + " is defined smaller than 0, which corresponds to blade root. Please check the yaml input."
                     )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["chord_start"] < 0.2:
-                raise ValueError(
-                    "Error: the start along the chord of the trailing edge flap number "
-                    + str(i)
-                    + " is smaller than 0.2, which is too close to the leading edge. Please check the yaml input."
+                elif blade["aerodynamic_control"]["te_flaps"][i]["span_start"] > 1.0:
+                    raise ValueError(
+                        "Error: the start along blade span of the trailing edge flap number "
+                        + str(i)
+                        + " is defined bigger than 1, which corresponds to blade tip. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["te_flaps"][i]["span_end"] < 0.0:
+                    raise ValueError(
+                        "Error: the end along blade span of the trailing edge flap number "
+                        + str(i)
+                        + " is defined smaller than 0, which corresponds to blade root. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["te_flaps"][i]["span_end"] > 1.0:
+                    raise ValueError(
+                        "Error: the end along blade span of the trailing edge flap number "
+                        + str(i)
+                        + " is defined bigger than 1, which corresponds to blade tip. Please check the yaml input."
+                    )
+                elif (
+                    blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
+                    == blade["aerodynamic_control"]["te_flaps"][i]["span_end"]
+                ):
+                    raise ValueError(
+                        "Error: the start and end along blade span of the trailing edge flap number "
+                        + str(i)
+                        + " are defined equal. Please check the yaml input."
+                    )
+                elif i > 0:
+                    if (
+                        blade["aerodynamic_control"]["te_flaps"][i]["span_start"]
+                        < blade["aerodynamic_control"]["te_flaps"][i - 1]["span_end"]
+                    ):
+                        raise ValueError(
+                            "Error: the start along blade span of the trailing edge flap number "
+                            + str(i)
+                            + " is smaller than the end of the trailing edge flap number "
+                            + str(i - 1)
+                            + ". Please check the yaml input."
+                        )
+                elif blade["aerodynamic_control"]["te_flaps"][i]["chord_start"] < 0.2:
+                    raise ValueError(
+                        "Error: the start along the chord of the trailing edge flap number "
+                        + str(i)
+                        + " is smaller than 0.2, which is too close to the leading edge. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["te_flaps"][i]["chord_start"] > 1.0:
+                    raise ValueError(
+                        "Error: the end along the chord of the trailing edge flap number "
+                        + str(i)
+                        + " is larger than 1., which is beyond the trailing edge. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["te_flaps"][i]["delta_max_pos"] > 30.0 / 180.0 * np.pi:
+                    raise ValueError(
+                        "Error: the max positive deflection of the trailing edge flap number "
+                        + str(i)
+                        + " is larger than 30 deg, which is beyond the limits of applicability of this tool. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["te_flaps"][i]["delta_max_neg"] < -30.0 / 180.0 * np.pi:
+                    raise ValueError(
+                        "Error: the max negative deflection of the trailing edge flap number "
+                        + str(i)
+                        + " is smaller than -30 deg, which is beyond the limits of applicability of this tool. Please check the yaml input."
+                    )
+                elif (
+                    blade["aerodynamic_control"]["te_flaps"][i]["delta_max_pos"]
+                    < blade["aerodynamic_control"]["te_flaps"][i]["delta_max_neg"]
+                ):
+                    raise ValueError(
+                        "Error: the max positive deflection of the trailing edge flap number "
+                        + str(i)
+                        + " is smaller than the max negative deflection. Please check the yaml input."
+                    )
+                else:
+                    pass
+            if "le_spoilers" in blade["aerodynamic_control"].keys():
+                wt_opt["DAC_ivc.DAC_start"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["span_start"]
+                wt_opt["DAC_ivc.DAC_end"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["span_end"]
+                # wt_opt["DAC_ivc.chord_start"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["chord_start"]
+                wt_opt["DAC_ivc.delta_max_pos"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["delta_max_pos"]
+                wt_opt["DAC_ivc.delta_max_neg"][i] = blade["aerodynamic_control"]["le_spoilers"][i]["delta_max_neg"]
+
+                wt_opt["DAC_ivc.DAC_ext"] = (
+                    blade["aerodynamic_control"]["le_spoilers"][i]["span_end"]
+                    - blade["aerodynamic_control"]["le_spoilers"][i]["span_start"]
                 )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["chord_start"] > 1.0:
-                raise ValueError(
-                    "Error: the end along the chord of the trailing edge flap number "
-                    + str(i)
-                    + " is larger than 1., which is beyond the trailing edge. Please check the yaml input."
-                )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["delta_max_pos"] > 30.0 / 180.0 * np.pi:
-                raise ValueError(
-                    "Error: the max positive deflection of the trailing edge flap number "
-                    + str(i)
-                    + " is larger than 30 deg, which is beyond the limits of applicability of this tool. Please check the yaml input."
-                )
-            elif blade["aerodynamic_control"]["te_flaps"][i]["delta_max_neg"] < -30.0 / 180.0 * np.pi:
-                raise ValueError(
-                    "Error: the max negative deflection of the trailing edge flap number "
-                    + str(i)
-                    + " is smaller than -30 deg, which is beyond the limits of applicability of this tool. Please check the yaml input."
-                )
-            elif (
-                blade["aerodynamic_control"]["te_flaps"][i]["delta_max_pos"]
-                < blade["aerodynamic_control"]["te_flaps"][i]["delta_max_neg"]
-            ):
-                raise ValueError(
-                    "Error: the max positive deflection of the trailing edge flap number "
-                    + str(i)
-                    + " is smaller than the max negative deflection. Please check the yaml input."
-                )
-            else:
-                pass
+                # wt_opt['DAC_ivc.DAC_end'] = blade['aerodynamic_control'][DAC'][i]['span_end']
+
+                # Checks for consistency
+                if blade["aerodynamic_control"]["le_spoilers"][i]["span_start"] < 0.0:
+                    raise ValueError(
+                        "Error: the start along blade span of the LE Spoiler number "
+                        + str(i)
+                        + " is defined smaller than 0, which corresponds to blade root. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["le_spoilers"][i]["span_start"] > 1.0:
+                    raise ValueError(
+                        "Error: the start along blade span of the LE Spoiler number "
+                        + str(i)
+                        + " is defined bigger than 1, which corresponds to blade tip. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["le_spoilers"][i]["span_end"] < 0.0:
+                    raise ValueError(
+                        "Error: the end along blade span of the LE Spoilers number "
+                        + str(i)
+                        + " is defined smaller than 0, which corresponds to blade root. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["le_spoilers"][i]["span_end"] > 1.0:
+                    raise ValueError(
+                        "Error: the end along blade span of the LE Spoiler number "
+                        + str(i)
+                        + " is defined bigger than 1, which corresponds to blade tip. Please check the yaml input."
+                    )
+                elif (
+                    blade["aerodynamic_control"]["le_spoilers"][i]["span_start"]
+                    == blade["aerodynamic_control"]["le_spoilers"][i]["span_end"]
+                ):
+                    raise ValueError(
+                        "Error: the start and end along blade span of the LE Spoiler number "
+                        + str(i)
+                        + " are defined equal. Please check the yaml input."
+                    )
+                elif i > 0:
+                    if (
+                        blade["aerodynamic_control"]["le_spoilers"][i]["span_start"]
+                        < blade["aerodynamic_control"]["le_spoilers"][i - 1]["span_end"]
+                    ):
+                        raise ValueError(
+                            "Error: the start along blade span of the LE Spoilers number "
+                            + str(i)
+                            + " is smaller than the end of the LE Spoilers number "
+                            + str(i - 1)
+                            + ". Please check the yaml input."
+                        )
+                # elif blade["aerodynamic_control"]["te_flaps"][i]["chord_start"] < 0.2:
+                #     raise ValueError(
+                #         "Error: the start along the chord of the trailing edge flap number "
+                #         + str(i)
+                #         + " is smaller than 0.2, which is too close to the leading edge. Please check the yaml input."
+                #     )
+                # elif blade["aerodynamic_control"]["te_flaps"][i]["chord_start"] > 1.0:
+                #     raise ValueError(
+                #         "Error: the end along the chord of the trailing edge flap number "
+                #         + str(i)
+                #         + " is larger than 1., which is beyond the trailing edge. Please check the yaml input."
+                #     )
+                elif blade["aerodynamic_control"]["le_spoilers"][i]["delta_max_pos"] > 9.0:
+                    raise ValueError(
+                        "Error: the max positive deployment of the LE Spoiler number "
+                        + str(i)
+                        + " is larger than 9 mm, which is beyond the limits of applicability of this tool. Please check the yaml input."
+                    )
+                elif blade["aerodynamic_control"]["le_spoilers"][i]["delta_max_neg"] < 0.0:
+                    raise ValueError(
+                        "Error: the max negative deployment of the LE Spoiler number "
+                        + str(i)
+                        + " is smaller than 0 mm, which is beyond the limits of applicability of this tool. Please check the yaml input."
+                    )
+                elif (
+                    blade["aerodynamic_control"]["le_spoilers"][i]["delta_max_pos"]
+                    < blade["aerodynamic_control"]["le_spoilers"][i]["delta_max_neg"]
+                ):
+                    raise ValueError(
+                        "Error: the max positive deployment of the LE Spoiler number "
+                        + str(i)
+                        + " is smaller than the max negative deployment. Please check the yaml input."
+                    )
+                else:
+                    pass
 
     return wt_opt
 

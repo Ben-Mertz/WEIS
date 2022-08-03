@@ -119,9 +119,9 @@ SUBROUTINE WriteRestartFile(LocalVar, CntrPar, objInst, RootName, size_avcOUTNAM
         WRITE( Un, IOSTAT=ErrStat) LocalVar%Fl_PitCom
         WRITE( Un, IOSTAT=ErrStat) LocalVar%NACIMU_FA_AccF
         WRITE( Un, IOSTAT=ErrStat) LocalVar%FA_AccF
-        WRITE( Un, IOSTAT=ErrStat) LocalVar%Flp_Angle(1)
-        WRITE( Un, IOSTAT=ErrStat) LocalVar%Flp_Angle(2)
-        WRITE( Un, IOSTAT=ErrStat) LocalVar%Flp_Angle(3)
+        WRITE( Un, IOSTAT=ErrStat) LocalVar%DAC_Param(1)
+        WRITE( Un, IOSTAT=ErrStat) LocalVar%DAC_Param(2)
+        WRITE( Un, IOSTAT=ErrStat) LocalVar%DAC_Param(3)
         WRITE( Un, IOSTAT=ErrStat) LocalVar%RootMyb_Last(1)
         WRITE( Un, IOSTAT=ErrStat) LocalVar%RootMyb_Last(2)
         WRITE( Un, IOSTAT=ErrStat) LocalVar%RootMyb_Last(3)
@@ -297,9 +297,9 @@ SUBROUTINE ReadRestartFile(avrSWAP, LocalVar, CntrPar, objInst, PerfData, RootNa
         READ( Un, IOSTAT=ErrStat) LocalVar%Fl_PitCom
         READ( Un, IOSTAT=ErrStat) LocalVar%NACIMU_FA_AccF
         READ( Un, IOSTAT=ErrStat) LocalVar%FA_AccF
-        READ( Un, IOSTAT=ErrStat) LocalVar%Flp_Angle(1)
-        READ( Un, IOSTAT=ErrStat) LocalVar%Flp_Angle(2)
-        READ( Un, IOSTAT=ErrStat) LocalVar%Flp_Angle(3)
+        READ( Un, IOSTAT=ErrStat) LocalVar%DAC_Param(1)
+        READ( Un, IOSTAT=ErrStat) LocalVar%DAC_Param(2)
+        READ( Un, IOSTAT=ErrStat) LocalVar%DAC_Param(3)
         READ( Un, IOSTAT=ErrStat) LocalVar%RootMyb_Last(1)
         READ( Un, IOSTAT=ErrStat) LocalVar%RootMyb_Last(2)
         READ( Un, IOSTAT=ErrStat) LocalVar%RootMyb_Last(3)
@@ -496,7 +496,7 @@ SUBROUTINE Debug(LocalVar, CntrPar, DebugVar, avrSWAP, RootName, size_avcOUTNAME
     LocalVarOutData(67) = LocalVar%Fl_PitCom
     LocalVarOutData(68) = LocalVar%NACIMU_FA_AccF
     LocalVarOutData(69) = LocalVar%FA_AccF
-    LocalVarOutData(70) = LocalVar%Flp_Angle(1)
+    LocalVarOutData(70) = LocalVar%DAC_Param(1)
     LocalVarOutData(71) = LocalVar%RootMyb_Last(1)
     LocalVarOutData(72) = LocalVar%ACC_INFILE_SIZE
     LocalVarOutStrings = [CHARACTER(15) ::  'iStatus', 'Time', 'DT', 'VS_GenPwr', 'GenSpeed', & 
@@ -512,7 +512,7 @@ SUBROUTINE Debug(LocalVar, CntrPar, DebugVar, avrSWAP, RootName, size_avcOUTNAME
                                       'VS_MechGenPwr', 'VS_SpdErrAr', 'VS_SpdErrBr', 'VS_SpdErr', 'VS_State', & 
                                       'VS_Rgn3Pitch', 'WE_Vw', 'WE_Vw_F', 'WE_VwI', 'WE_VwIdot', & 
                                       'VS_LastGenTrqF', 'Y_AccErr', 'Y_ErrLPFFast', 'Y_ErrLPFSlow', 'Y_MErr', & 
-                                      'Y_YawEndT', 'Fl_PitCom', 'NACIMU_FA_AccF', 'FA_AccF', 'Flp_Angle', & 
+                                      'Y_YawEndT', 'Fl_PitCom', 'NACIMU_FA_AccF', 'FA_AccF', 'DAC_Param', & 
                                       'RootMyb_Last', 'ACC_INFILE_SIZE']
     ! Initialize debug file
     IF ((LocalVar%iStatus == 0) .OR. (LocalVar%iStatus == -9))  THEN ! .TRUE. if we're on the first call to the DLL

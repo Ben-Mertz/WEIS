@@ -250,8 +250,8 @@ CONTAINS
             IF (LocalVar%Time >= LocalVar%Y_YawEndT) THEN        ! Check if the turbine is currently yawing
                 avrSWAP(48) = 0.0                                ! Set yaw rate to zero
             
-                LocalVar%Y_ErrLPFFast = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPFast, LocalVar%FP, LocalVar%iStatus, .FALSE., objInst%instLPF)        ! Fast low pass filtered yaw error with a frequency of 1
-                LocalVar%Y_ErrLPFSlow = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPSlow, LocalVar%FP, LocalVar%iStatus, .FALSE., objInst%instLPF)        ! Slow low pass filtered yaw error with a frequency of 1/60
+                LocalVar%Y_ErrLPFFast = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPFast, LocalVar%iStatus, .FALSE., objInst%instLPF)        ! Fast low pass filtered yaw error with a frequency of 1
+                LocalVar%Y_ErrLPFSlow = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPSlow, LocalVar%iStatus, .FALSE., objInst%instLPF)        ! Slow low pass filtered yaw error with a frequency of 1/60
             
                 LocalVar%Y_AccErr = LocalVar%Y_AccErr + LocalVar%DT*SIGN(LocalVar%Y_ErrLPFFast**2, LocalVar%Y_ErrLPFFast)    ! Integral of the fast low pass filtered yaw error
             
@@ -260,8 +260,8 @@ CONTAINS
                 END IF
             ELSE
                 avrSWAP(48) = SIGN(CntrPar%Y_Rate, LocalVar%Y_MErr)        ! Set yaw rate to predefined yaw rate, the sign of the error is copied to the rate
-                LocalVar%Y_ErrLPFFast = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPFast, LocalVar%FP, LocalVar%iStatus, .TRUE., objInst%instLPF)        ! Fast low pass filtered yaw error with a frequency of 1
-                LocalVar%Y_ErrLPFSlow = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPSlow, LocalVar%FP, LocalVar%iStatus, .TRUE., objInst%instLPF)        ! Slow low pass filtered yaw error with a frequency of 1/60
+                LocalVar%Y_ErrLPFFast = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPFast, LocalVar%iStatus, .TRUE., objInst%instLPF)        ! Fast low pass filtered yaw error with a frequency of 1
+                LocalVar%Y_ErrLPFSlow = LPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_omegaLPSlow, LocalVar%iStatus, .TRUE., objInst%instLPF)        ! Slow low pass filtered yaw error with a frequency of 1/60
                 LocalVar%Y_AccErr = 0.0    ! "
             END IF
         END IF
@@ -311,7 +311,7 @@ CONTAINS
 
         ! High-pass filter the MBC yaw component and filter yaw alignment error, and compute the yaw-by-IPC contribution
         IF (CntrPar%Y_ControlMode == 2) THEN
-            Y_MErrF = SecLPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_IPC_omegaLP, CntrPar%Y_IPC_zetaLP, LocalVar%FP, LocalVar%iStatus, LocalVar%restart, objInst%instSecLPF)
+            Y_MErrF = SecLPFilter(LocalVar%Y_MErr, LocalVar%DT, CntrPar%Y_IPC_omegaLP, CntrPar%Y_IPC_zetaLP, LocalVar%iStatus, LocalVar%restart, objInst%instSecLPF)
             Y_MErrF_IPC = PIController(Y_MErrF, CntrPar%Y_IPC_KP(1), CntrPar%Y_IPC_KI(1), -CntrPar%Y_IPC_IntSat, CntrPar%Y_IPC_IntSat, LocalVar%DT, 0.0_DbKi, LocalVar%piP, LocalVar%restart, objInst%instPI)
         ELSE
             axisYawF_1P = axisYaw_1P
@@ -354,7 +354,7 @@ CONTAINS
             
             ! Optionally filter the resulting signal to induce a phase delay
             IF (CntrPar%IPC_CornerFreqAct > 0.0) THEN
-                PitComIPCF(K) = LPFilter(PitComIPC(K), LocalVar%DT, CntrPar%IPC_CornerFreqAct, LocalVar%FP, LocalVar%iStatus, LocalVar%restart, objInst%instLPF)
+                PitComIPCF(K) = LPFilter(PitComIPC(K), LocalVar%DT, CntrPar%IPC_CornerFreqAct, LocalVar%iStatus, LocalVar%restart, objInst%instLPF)
             ELSE
                 PitComIPCF(K) = PitComIPC(K)
             END IF
@@ -425,7 +425,7 @@ CONTAINS
 
     END FUNCTION FloatingFeedback
 !-------------------------------------------------------------------------------------------------------------------------------
-    SUBROUTINE FlapControl(avrSWAP, CntrPar, LocalVar, objInst)
+    SUBROUTINE DACControl(avrSWAP, CntrPar, LocalVar, objInst)
         ! Yaw rate controller
         !       Y_ControlMode = 0, No yaw control
         !       Y_ControlMode = 1, Simple yaw rate control using yaw drive
@@ -442,57 +442,61 @@ CONTAINS
         REAL(DbKi)                  :: RootMyb_Vel(3)
         REAL(DbKi)                  :: RootMyb_VelErr(3)
         REAL(DbKi)                  :: axisTilt_1P, axisYaw_1P    ! Direct axis and quadrature axis outputted by Coleman transform, 1P
-        REAL(DbKi)                  :: Flp_axisTilt_1P, Flp_axisYaw_1P ! Flap command in direct and quadrature axis coordinates
-        ! Flap control
-        IF (CntrPar%Flp_Mode > 0) THEN
+        REAL(DbKi)                  :: DAC_axisTilt_1P, DAC_axisYaw_1P ! DAC command in direct and quadrature axis coordinates
+        ! DAC control
+        IF (CntrPar%DAC_Mode > 0) THEN
             IF (LocalVar%iStatus == 0) THEN
                 LocalVar%RootMyb_Last(1) = 0 - LocalVar%rootMOOP(1)
                 LocalVar%RootMyb_Last(2) = 0 - LocalVar%rootMOOP(2)
                 LocalVar%RootMyb_Last(3) = 0 - LocalVar%rootMOOP(3)
-                ! Initial Flap angle
-                LocalVar%Flp_Angle(1) = CntrPar%Flp_Angle
-                LocalVar%Flp_Angle(2) = CntrPar%Flp_Angle
-                LocalVar%Flp_Angle(3) = CntrPar%Flp_Angle
+                ! Initial DAC Param
+                LocalVar%DAC_Param(1) = CntrPar%DAC_Param
+                LocalVar%DAC_Param(2) = CntrPar%DAC_Param
+                LocalVar%DAC_Param(3) = CntrPar%DAC_Param
                 ! Initialize controller
-                IF (CntrPar%Flp_Mode == 2) THEN
-                    LocalVar%Flp_Angle(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%Flp_Angle(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, 0.05, -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, LocalVar%piP, LocalVar%restart, objInst%instPI)
+                IF (CntrPar%DAC_Mode == 2) THEN
+                    LocalVar%DAC_Param(K) = PIIController(RootMyb_VelErr(K), 0 - LocalVar%DAC_Param(K), CntrPar%DAC_Kp, CntrPar%DAC_Ki, 0.05, -CntrPar%DAC_Max , CntrPar%DAC_Max , LocalVar%DT, 0.0, LocalVar%piP, LocalVar%restart, objInst%instPI)
                 ENDIF
             
-            ! Steady flap angle
-            ELSEIF (CntrPar%Flp_Mode == 1) THEN
-                LocalVar%Flp_Angle(1) = LocalVar%Flp_Angle(1) 
-                LocalVar%Flp_Angle(2) = LocalVar%Flp_Angle(2) 
-                LocalVar%Flp_Angle(3) = LocalVar%Flp_Angle(3) 
+            ! Steady DAC Parameter
+            ELSEIF (CntrPar%DAC_Mode == 1) THEN
+                LocalVar%DAC_Param(1) = LocalVar%DAC_Param(1) 
+                LocalVar%DAC_Param(2) = LocalVar%DAC_Param(2) 
+                LocalVar%DAC_Param(3) = LocalVar%DAC_Param(3) 
 
-            ! PII flap control
-            ELSEIF (CntrPar%Flp_Mode == 2) THEN
+            ! PII DAC control
+            ELSEIF (CntrPar%DAC_Mode == 2) THEN
                 DO K = 1,LocalVar%NumBl
-                    ! Find flap angle command - includes an integral term to encourage zero flap angle
-                    LocalVar%Flp_Angle(K) = PIIController(-LocalVar%rootMOOPF(K), 0 - LocalVar%Flp_Angle(K), CntrPar%Flp_Kp, CntrPar%Flp_Ki, REAL(0.05,DbKi), -CntrPar%Flp_MaxPit , CntrPar%Flp_MaxPit , LocalVar%DT, 0.0, LocalVar%piP, LocalVar%restart, objInst%instPI)
+                    ! Find DAC Parameter command - includes an integral term to encourage zero DAC Parameter
+                    LocalVar%DAC_Param(K) = PIIController(-LocalVar%rootMOOPF(K), 0 - LocalVar%DAC_Param(K), CntrPar%DAC_Kp, CntrPar%DAC_Ki, REAL(0.05,DbKi), -CntrPar%DAC_Max , CntrPar%DAC_Max , LocalVar%DT, 0.0, LocalVar%piP, LocalVar%restart, objInst%instPI)
                     ! Saturation Limits
-                    LocalVar%Flp_Angle(K) = saturate(LocalVar%Flp_Angle(K), -CntrPar%Flp_MaxPit, CntrPar%Flp_MaxPit) * R2D
+                    IF (CntrPar%DAC_Type == 0) THEN
+                        LocalVar%DAC_Param(K) = saturate(LocalVar%DAC_Param(K), -CntrPar%DAC_Max, CntrPar%DAC_Max) * R2D
+                    ELSE
+                        LocalVar%DAC_Param(K) = saturate(LocalVar%DAC_Param(K), -CntrPar%DAC_Max, CntrPar%DAC_Max)
+                    ENDIF
                 END DO
 
-            ! Cyclic flap Control
-            ELSEIF (CntrPar%Flp_Mode == 3) THEN
+            ! Cyclic DAC Control
+            ELSEIF (CntrPar%DAC_Mode == 3) THEN
                 ! Pass rootMOOPs through the Coleman transform to get the tilt and yaw moment axis
                 CALL ColemanTransform(LocalVar%rootMOOPF, LocalVar%Azimuth, NP_1, axisTilt_1P, axisYaw_1P)
 
                 ! Apply PI control
-                Flp_axisTilt_1P = PIController(axisTilt_1P, CntrPar%Flp_Kp, CntrPar%Flp_Ki, -CntrPar%Flp_MaxPit, CntrPar%Flp_MaxPit, LocalVar%DT, 0.0_DbKi, LocalVar%piP, LocalVar%restart, objInst%instPI) 
-                Flp_axisYaw_1P = PIController(axisYaw_1P, CntrPar%Flp_Kp, CntrPar%Flp_Ki, -CntrPar%Flp_MaxPit, CntrPar%Flp_MaxPit, LocalVar%DT, 0.0_DbKi, LocalVar%piP, LocalVar%restart, objInst%instPI) 
+                DAC_axisTilt_1P = PIController(axisTilt_1P, CntrPar%DAC_Kp, CntrPar%DAC_Ki, -CntrPar%DAC_Max, CntrPar%DAC_Max, LocalVar%DT, 0.0_DbKi, LocalVar%piP, LocalVar%restart, objInst%instPI) 
+                DAC_axisYaw_1P = PIController(axisYaw_1P, CntrPar%DAC_Kp, CntrPar%DAC_Ki, -CntrPar%DAC_Max, CntrPar%DAC_Max, LocalVar%DT, 0.0_DbKi, LocalVar%piP, LocalVar%restart, objInst%instPI) 
             
-                ! Pass direct and quadrature axis through the inverse Coleman transform to get the commanded pitch angles
-                CALL ColemanTransformInverse(Flp_axisTilt_1P, Flp_axisYaw_1P, LocalVar%Azimuth, NP_1, 0.0_DbKi, LocalVar%Flp_Angle)
+                ! Pass direct and quadrature axis through the inverse Coleman transform to get the commanded parameter values
+                CALL ColemanTransformInverse(DAC_axisTilt_1P, DAC_axisYaw_1P, LocalVar%Azimuth, NP_1, 0.0_DbKi, LocalVar%DAC_Param)
                 
             ENDIF
 
             ! Send to AVRSwap
-            avrSWAP(120) = LocalVar%Flp_Angle(1)   ! Send flap pitch command (deg)
-            avrSWAP(121) = LocalVar%Flp_Angle(2)   ! Send flap pitch command (deg)
-            avrSWAP(122) = LocalVar%Flp_Angle(3)   ! Send flap pitch command (deg)
+            avrSWAP(120) = LocalVar%DAC_Param(1)   ! Send DAC Parameter command (deg of flaps or default units for other DAC devices)
+            avrSWAP(121) = LocalVar%DAC_Param(2)   ! Send DAC Parameter command (deg of flaps or default units for other DAC devices)
+            avrSWAP(122) = LocalVar%DAC_Param(3)   ! Send DAC Parameter command (deg of flaps or default units for other DAC devices)
         ELSE
             RETURN
         ENDIF
-    END SUBROUTINE FlapControl
+    END SUBROUTINE DACControl
 END MODULE Controllers

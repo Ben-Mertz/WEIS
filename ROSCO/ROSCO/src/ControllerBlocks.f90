@@ -1,13 +1,3 @@
-! Copyright 2019 NREL
-
-! Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-! this file except in compliance with the License. You may obtain a copy of the
-! License at http://www.apache.org/licenses/LICENSE-2.0
-
-! Unless required by applicable law or agreed to in writing, software distributed
-! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-! CONDITIONS OF ANY KIND, either express or implied. See the License for the
-! specific language governing permissions and limitations under the License.
 ! -------------------------------------------------------------------------------------------
 
 ! This module contains additional routines and functions to supplement the primary controllers used in the Controllers module
@@ -321,7 +311,7 @@ CONTAINS
             DebugVar%WE_lambda = lambda
         ELSE        
             ! Filter wind speed at hub height as directly passed from OpenFAST
-            LocalVar%WE_Vw = LPFilter(LocalVar%HorWindV, LocalVar%DT, CntrPar%F_WECornerFreq, LocalVar%FP, LocalVar%iStatus, LocalVar%restart, objInst%instLPF)
+            LocalVar%WE_Vw = LPFilter(LocalVar%HorWindV, LocalVar%DT, CntrPar%F_WECornerFreq, LocalVar%iStatus, LocalVar%restart, objInst%instLPF)
         ENDIF 
         DebugVar%WE_Vw = LocalVar%WE_Vw
         ! Add RoutineName to error message
@@ -351,7 +341,7 @@ CONTAINS
             DelOmega = ((LocalVar%PC_PitComT - LocalVar%PC_MinPit)/0.524) * CntrPar%SS_VSGain - ((CntrPar%VS_RtPwr - LocalVar%VS_LastGenPwr))/CntrPar%VS_RtPwr * CntrPar%SS_PCGain ! Normalize to 30 degrees for now
             DelOmega = DelOmega * CntrPar%PC_RefSpd
             ! Filter
-            LocalVar%SS_DelOmegaF = LPFilter(DelOmega, LocalVar%DT, CntrPar%F_SSCornerFreq, LocalVar%FP, LocalVar%iStatus, LocalVar%restart, objInst%instLPF) 
+            LocalVar%SS_DelOmegaF = LPFilter(DelOmega, LocalVar%DT, CntrPar%F_SSCornerFreq, LocalVar%iStatus, LocalVar%restart, objInst%instLPF) 
         ELSE
             LocalVar%SS_DelOmegaF = 0 ! No setpoint smoothing
         ENDIF
@@ -390,12 +380,21 @@ CONTAINS
         USE ROSCO_Types, ONLY : LocalVariables, ControlParameters, ObjectInstances
         IMPLICIT NONE
         ! Inputs
-        TYPE(ControlParameters),    INTENT(IN   )       :: CntrPar
+        TYPE(ControlParameters),    INTENT(INOUT)       :: CntrPar
         TYPE(LocalVariables),       INTENT(INOUT)       :: LocalVar 
         TYPE(ObjectInstances),      INTENT(INOUT)       :: objInst
+        ! Allocate Variables 
+        REAL(4)                      :: SD_BlPitchF
+        REAL(4)                      :: SD_YawErrF
+        REAL(4)                      :: V_NearRated
+        REAL(4)                      :: YawSD_Slope
+        REAL(4)                      :: Offset
+        REAL(4)                      :: MaxYaw
+        REAL(4)                      :: SD_slope
+        REAL(4), Save                :: SD_time = 0.0
+        Logical                      :: downwind=.TRUE.
+        Logical                      :: SD_p2s=.FALSE.
         
-        ! Local Variables 
-        REAL(DbKi)                                      :: SD_BlPitchF
         ! Initialize Shutdown Varible
         IF (LocalVar%iStatus == 0) THEN
             LocalVar%SD = .FALSE.
@@ -404,20 +403,75 @@ CONTAINS
         ! See if we should shutdown
         IF (.NOT. LocalVar%SD ) THEN
             ! Filter pitch signal
-            SD_BlPitchF = LPFilter(LocalVar%PC_PitComT, LocalVar%DT, CntrPar%SD_CornerFreq, LocalVar%FP, LocalVar%iStatus, LocalVar%restart, objInst%instLPF)
-            
-            ! Go into shutdown if above max pit
-            IF (SD_BlPitchF > CntrPar%SD_MaxPit) THEN
-                LocalVar%SD  = .TRUE.
-            ELSE
-                LocalVar%SD  = .FALSE.
-            ENDIF 
+            SD_BlPitchF = LPFilter(LocalVar%PC_PitComT, LocalVar%DT, CntrPar%SD_CornerFreq, LocalVar%iStatus, .FALSE., objInst%instLPF)
+            ! Filter yaw error
+            SD_YawErrF  = LPFilter(LocalVar%Y_M, LocalVar%DT, 0.2*CntrPar%SD_CornerFreq, LocalVar%iStatus, .FALSE., objInst%instLPF)
+            ! Find maximum yaw angle
+            YawSD_Slope = (120.0 - 60.0)/(CntrPar%VS_MinOMSpd - CntrPar%PC_RefSpd)
+            Offset = 120.0 - YawSD_Slope * CntrPar%VS_MinOMSpd
+            IF (LocalVar%GenSpeedF < CntrPar%VS_MinOMSpd) THEN
+                MaxYaw = 360.0 ! No shutdown in WE_Vw < 5.0 m/s
+            ELSE 
+                MaxYaw = YawSD_Slope * LocalVar%GenSpeedF + Offset ! In Degrees
+            ENDIF
+            MaxYaw = max(MaxYaw, 50.0)
+            ! Shutdown?
+            IF (LocalVar%Time > 30.0) THEN
+                IF (LocalVar%GenSpeedF > CntrPar%PC_RefSpd*1.2) THEN
+                    LocalVar%SD  = .TRUE.
+                ELSEIF (SD_BlPitchF > CntrPar%SD_MaxPit) THEN
+                    LocalVar%SD  = .TRUE.
+                ELSEIF (ABS(SD_YawErrF) > MaxYaw*D2R) THEN 
+                    LocalVar%SD  = .TRUE.
+                ELSE
+                    LocalVar%SD  = .FALSE.
+                ENDIF 
+            ENDIF
         ENDIF
+        !IF (.NOT. LocalVar%SD ) THEN
+        !    ! Filter pitch signal
+        !    SD_BlPitchF = LPFilter(LocalVar%PC_PitComT, LocalVar%DT, CntrPar%SD_CornerFreq, LocalVar%iStatus, LocalVar%restart, objInst%instLPF)
+            
+        !    ! Go into shutdown if above max pit
+        !    IF (SD_BlPitchF > CntrPar%SD_MaxPit) THEN
+        !        LocalVar%SD  = .TRUE.
+        !    ELSE
+        !        LocalVar%SD  = .FALSE.
+        !    ENDIF 
+        !ENDIF
 
         ! Pitch Blades to 90 degrees at max pitch rate if in shutdown mode
         IF (LocalVar%SD) THEN
-            Shutdown = LocalVar%BlPitch(1) + CntrPar%PC_MaxRat*LocalVar%DT
-            IF (MODULO(LocalVar%Time, 10.0_DbKi) == 0) THEN
+            
+            ! E-stop - Pitch-to-stall (downwind, Below Rated)
+            IF (( (downwind) .AND. (LocalVar%GenTq < 0.9*CntrPar%VS_ArSatTq) .AND. &
+                (LocalVar%PC_PitComT < 2.0*D2R) ) &
+                .OR. (SD_p2s) ) THEN
+
+                Shutdown = LocalVar%BlPitch(1) - CntrPar%PC_MaxRat*LocalVar%DT
+                LocalVar%PC_MinPit = -90*D2R
+            
+                SD_p2s = .TRUE.
+                ! SD_time = SD_time + LocalVar%DT
+                ! SD_slope = - (CntrPar%PC_RefSpd / 30.0)
+                ! LocalVar%SD_RefSpd = SD_slope*SD_time + CntrPar%PC_RefSpd
+                ! LocalVar%SD_RefSpd = max(LocalVar%SD_RefSpd, 0.0)
+
+            ! E-stop - Pitch-to-feather (Upwind)
+            ELSEIF (LocalVar%BlPitch(1) > CntrPar%SD_MaxPit) THEN
+                Shutdown = LocalVar%BlPitch(1) + CntrPar%PC_MaxRat*LocalVar%DT
+            
+            ELSE
+                ! "Normal" shutdown
+                SD_time = SD_time + LocalVar%DT
+                SD_slope = - (CntrPar%PC_RefSpd / 30.0)
+                LocalVar%SD_RefSpd = SD_slope*SD_time + CntrPar%PC_RefSpd
+                LocalVar%SD_RefSpd = max(LocalVar%SD_RefSpd, 0.0)
+                    
+                Shutdown = LocalVar%PC_PitComT
+            ENDIF
+
+            IF (MODULO(LocalVar%Time, 10.0) == 0) THEN
                 print *, ' ** SHUTDOWN MODE **'
             ENDIF
         ELSE

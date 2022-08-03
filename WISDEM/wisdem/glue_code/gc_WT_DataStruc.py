@@ -67,17 +67,17 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             airfoils.add_output(
                 "cl",
                 val=np.zeros((n_af, n_aoa, n_Re, n_tab)),
-                desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+                desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
             )
             airfoils.add_output(
                 "cd",
                 val=np.zeros((n_af, n_aoa, n_Re, n_tab)),
-                desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+                desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
             )
             airfoils.add_output(
                 "cm",
                 val=np.zeros((n_af, n_aoa, n_Re, n_tab)),
-                desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+                desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
             )
             # Airfoil coordinates
             airfoils.add_output(
@@ -877,10 +877,10 @@ class Compute_Blade_Outer_Shape_BEM(om.ExplicitComponent):
         rotorse_options = self.options["rotorse_options"]
         n_af_span = rotorse_options["n_af_span"]
         self.n_span = n_span = rotorse_options["n_span"]
-        if "n_te_flaps" in rotorse_options.keys():
-            n_te_flaps = rotorse_options["n_te_flaps"]
+        if "n_DAC" in rotorse_options.keys():
+            n_DAC = rotorse_options["n_DAC"]
         else:
-            n_te_flaps = 0
+            n_DAC = 0
 
         self.add_input(
             "s_default",
@@ -910,12 +910,12 @@ class Compute_Blade_Outer_Shape_BEM(om.ExplicitComponent):
 
         self.add_input(
             "span_end",
-            val=np.zeros(n_te_flaps),
+            val=np.zeros(n_DAC),
             desc="1D array of the positions along blade span where something (a DAC device?) starts and we want a grid point. Only values between 0 and 1 are meaningful.",
         )
         self.add_input(
             "span_ext",
-            val=np.zeros(n_te_flaps),
+            val=np.zeros(n_DAC),
             desc="1D array of the extensions along blade span where something (a DAC device?) lives and we want a grid point. Only values between 0 and 1 are meaningful.",
         )
 
@@ -963,21 +963,21 @@ class Compute_Blade_Outer_Shape_BEM(om.ExplicitComponent):
 
             # Account for start and end positions
             if inputs["span_end"] >= 0.98:
-                flap_start = 0.98 - inputs["span_ext"]
-                flap_end = 0.98
+                DAC_start = 0.98 - inputs["span_ext"]
+                DAC_end = 0.98
                 # print("WARNING: span_end point reached limits and was set to r/R = 0.98")
             else:
-                flap_start = inputs["span_end"] - inputs["span_ext"]
-                flap_end = inputs["span_end"]
+                DAC_start = inputs["span_end"] - inputs["span_ext"]
+                DAC_end = inputs["span_end"]
 
-            idx_flap_start = np.where(np.abs(nd_span_orig - flap_start) == (np.abs(nd_span_orig - flap_start)).min())[
+            idx_DAC_start = np.where(np.abs(nd_span_orig - DAC_start) == (np.abs(nd_span_orig - DAC_start)).min())[
                 0
             ][0]
-            idx_flap_end = np.where(np.abs(nd_span_orig - flap_end) == (np.abs(nd_span_orig - flap_end)).min())[0][0]
-            if idx_flap_start == idx_flap_end:
-                idx_flap_end += 1
-            outputs["s"][idx_flap_start] = flap_start
-            outputs["s"][idx_flap_end] = flap_end
+            idx_DAC_end = np.where(np.abs(nd_span_orig - DAC_end) == (np.abs(nd_span_orig - DAC_end)).min())[0][0]
+            if idx_DAC_start == idx_DAC_end:
+                idx_DAC_end += 1
+            outputs["s"][idx_DAC_start] = DAC_start
+            outputs["s"][idx_DAC_end] = DAC_end
             outputs["chord"] = np.interp(outputs["s"], nd_span_orig, chord_orig)
             outputs["twist"] = np.interp(outputs["s"], nd_span_orig, twist_orig)
             outputs["pitch_axis"] = np.interp(outputs["s"], nd_span_orig, pitch_axis_orig)
@@ -1044,17 +1044,17 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
         self.add_input(
             "cl",
             val=np.zeros((n_af, n_aoa, n_Re, n_tab)),
-            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "cd",
             val=np.zeros((n_af, n_aoa, n_Re, n_tab)),
-            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "cm",
             val=np.zeros((n_af, n_aoa, n_Re, n_tab)),
-            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the different airfoils defined in the yaml, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
 
         # Airfoil coordinates
@@ -1078,17 +1078,17 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
         self.add_output(
             "cl_interp",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_output(
             "cd_interp",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_output(
             "cm_interp",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_output(
             "coord_xy_interp",
@@ -1249,17 +1249,17 @@ class INN_Airfoils(om.ExplicitComponent):
         self.add_input(
             "cl_interp_yaml",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "cd_interp_yaml",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "cm_interp_yaml",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "coord_xy_interp_yaml",
@@ -1320,12 +1320,12 @@ class INN_Airfoils(om.ExplicitComponent):
         self.add_output(
             "cl_interp",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_output(
             "cd_interp",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_output(
             "aoa_inn",
@@ -3257,17 +3257,17 @@ class Airfoil3DCorrection(om.ExplicitComponent):
         self.add_input(
             "cl",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the lift coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "cd",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the drag coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input(
             "cm",
             val=np.zeros((n_span, n_aoa, n_Re, n_tab)),
-            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a flap.",
+            desc="4D array with the moment coefficients of the airfoils. Dimension 0 is along the blade span for n_span stations, dimension 1 is along the angles of attack, dimension 2 is along the Reynolds number, dimension 3 is along the number of tabs, which may describe multiple sets at the same station, for example in presence of a DAC device.",
         )
         self.add_input("rated_TSR", val=0.0, desc="Constant tip speed ratio in region II.")
         self.add_input(

@@ -425,7 +425,7 @@ class FASTLoadCases(ExplicitComponent):
         self.add_output('AEP', val=0.0, units='kW*h', desc='annual energy production reconstructed from the openfast simulations')
 
         self.add_output('My_std',      val=0.0,            units='N*m',  desc='standard deviation of blade root flap bending moment in out-of-plane direction')
-        self.add_output('flp1_std',    val=0.0,            units='deg',  desc='standard deviation of trailing-edge flap angle')
+        self.add_output('DAC1_std',    val=0.0,            units='deg',  desc='standard deviation of DAC device parameter')
 
         self.add_output('rated_V',     val=0.0,            units='m/s',  desc='rated wind speed')
         self.add_output('rated_Omega', val=0.0,            units='rpm',  desc='rotor rotation speed at rated')
@@ -1061,7 +1061,7 @@ class FASTLoadCases(ExplicitComponent):
 
                 fst_vt['AeroDyn15']['af_data'][i][j]['NumTabs']   = loop_index
                 if fst_vt['AeroDyn15']['AFTabMod'] == 3:
-                    fst_vt['AeroDyn15']['af_data'][i][j]['Ctrl'] = inputs['airfoils_Ctrl'][i,0,j]  # unsteady['Ctrl'] # added to unsteady function for variable flap controls at airfoils
+                    fst_vt['AeroDyn15']['af_data'][i][j]['Ctrl'] = inputs['airfoils_Ctrl'][i,0,j]  # unsteady['Ctrl'] # added to unsteady function for variable DAC controls at airfoils
                     fst_vt['AeroDyn15']['af_data'][i][j]['Re']   = inputs['airfoils_Re'][0] # If AFTabMod==3 the Re is neglected, but it still must be the same across tables
                 else:
                     fst_vt['AeroDyn15']['af_data'][i][j]['Re']   = inputs['airfoils_Re'][j]
@@ -1623,7 +1623,7 @@ class FASTLoadCases(ExplicitComponent):
             channels_out += ["B3N1Alpha", "B3N2Alpha", "B3N3Alpha", "B3N4Alpha", "B3N5Alpha", "B3N6Alpha", "B3N7Alpha", "B3N8Alpha", "B3N9Alpha"]
 
         # Channels for distributed aerodynamic control
-        if self.options['modeling_options']['ROSCO']['Flp_Mode']:   # we're doing flap control
+        if self.options['modeling_options']['ROSCO']['DAC_Mode']:   # we're doing DAC control
             channels_out += ['BLFLAP1', 'BLFLAP2', 'BLFLAP3']
 
         # Channels for wave outputs
@@ -1826,7 +1826,8 @@ class FASTLoadCases(ExplicitComponent):
         case_inputs = {}
         # Main fst
         case_inputs[("Fst","TMax")] = {'vals':self.TMax, 'group':1}
-        case_inputs[("Fst","TStart")] = {'vals':self.TStart, 'group':1}
+        # case_inputs[("Fst","TStart")] = {'vals':self.TStart, 'group':1}
+        case_inputs[("Fst","TStart")] = {'vals':[80], 'group':0}
         # Inflow wind
         case_inputs[("InflowWind","WindType")] = {'vals':WindFile_type, 'group':1}
         case_inputs[("InflowWind","FileName_BTS")] = {'vals':WindFile_name, 'group':1}

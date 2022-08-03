@@ -11,6 +11,14 @@
 ! -------------------------------------------------------------------------------------------
 ! Read and set the parameters used by the controller
 
+! Submodules:
+!           Assert: Initial condition and input check
+!           ComputeVariablesSetpoints: Compute setpoints used by controllers
+!           ReadAvrSWAP: Read AvrSWAP array
+!           ReadControlParameterFileSub: Read DISCON.IN input file
+!           ReadCPFile: Read text file containing Cp Surface
+!           SetParameters: Define initial conditions 
+
 MODULE ReadSetParameters
 
     USE, INTRINSIC :: ISO_C_Binding
@@ -39,6 +47,76 @@ MODULE ReadSetParameters
 
 
 CONTAINS
+    ! -----------------------------------------------------------------------------------
+    ! Calculate setpoints for primary control actions    
+    !SUBROUTINE ComputeVariablesSetpoints(CntrPar, LocalVar, objInst)
+    !    USE ROSCO_Types, ONLY : ControlParameters, LocalVariables, ObjectInstances
+        
+    !    ! Allocate variables
+    !    TYPE(ControlParameters), INTENT(INOUT)  :: CntrPar
+    !    TYPE(LocalVariables), INTENT(INOUT)     :: LocalVar
+    !    TYPE(ObjectInstances), INTENT(INOUT)    :: objInst
+
+    !    REAL(DbKi)                                 :: VS_RefSpd        ! Referece speed for variable speed torque controller, [rad/s] 
+    !    REAL(DbKi)                                 :: PC_RefSpd        ! Referece speed for pitch controller, [rad/s] 
+    !    REAL(DbKi)                                 :: Omega_op         ! Optimal TSR-tracking generator speed, [rad/s]
+    !    REAL(DbKi)                                 :: WE_Vw_f          ! Filtered Wind Speed Estimate
+    !    ! temp
+    !    ! REAL(DbKi)                                 :: VS_TSRop = 7.5
+
+    !    ! ----- Calculate yaw misalignment error -----
+    !    LocalVar%Y_MErr = LocalVar%Y_M + CntrPar%Y_MErrSet ! Yaw-alignment error
+        
+    !    ! ----- Pitch controller speed and power error -----
+    !    ! Implement setpoint smoothing
+    !    IF (LocalVar%SS_DelOmegaF < 0) THEN
+    !        PC_RefSpd = CntrPar%PC_RefSpd - LocalVar%SS_DelOmegaF
+    !    ELSE
+    !        PC_RefSpd = CntrPar%PC_RefSpd
+    !    ENDIF
+
+    !    IF (LocalVar%SD) THEN
+    !        PC_RefSpd = LocalVar%SD_RefSpd
+    !    ENDIF
+
+    !    LocalVar%PC_SpdErr = PC_RefSpd - LocalVar%GenSpeedF            ! Speed error
+    !    LocalVar%PC_PwrErr = CntrPar%VS_RtPwr - LocalVar%VS_GenPwr             ! Power error
+        
+    !    ! ----- Torque controller reference errors -----
+    !    ! Define VS reference generator speed [rad/s]
+    !    IF (CntrPar%VS_ControlMode == 2) THEN
+    !        VS_RefSpd = (CntrPar%VS_TSRopt * LocalVar%We_Vw / CntrPar%WE_BladeRadius) * CntrPar%WE_GearboxRatio
+    !        VS_RefSpd = saturate(VS_RefSpd,CntrPar%VS_MinOMSpd, CntrPar%VS_RefSpd)
+    !    ELSE
+    !        VS_RefSpd = CntrPar%VS_RefSpd
+    !    ENDIF 
+        
+    !    ! Implement setpoint smoothing
+    !    IF (LocalVar%SS_DelOmegaF > 0) THEN
+    !        VS_RefSpd = VS_RefSpd - LocalVar%SS_DelOmegaF
+    !    ENDIF
+
+    !    ! Force zero torque in shutdown mode
+    !    IF (LocalVar%SD) THEN
+    !        VS_RefSpd = CntrPar%VS_MinOMSpd
+    !        ! VS_RefSpd = LocalVar%SD_RefSpd
+    !    ENDIF
+
+    !    ! Force minimum rotor speed
+    !    VS_RefSpd = max(VS_RefSpd, CntrPar%VS_MinOmSpd)
+
+    !    ! TSR-tracking reference error
+    !    IF (CntrPar%VS_ControlMode == 2) THEN
+    !        LocalVar%VS_SpdErr = VS_RefSpd - LocalVar%GenSpeedF
+    !    ENDIF
+        
+    !    ! Define transition region setpoint errors
+    !    LocalVar%VS_SpdErrAr = VS_RefSpd - LocalVar%GenSpeedF               ! Current speed error - Region 2.5 PI-control (Above Rated)
+    !    LocalVar%VS_SpdErrBr = CntrPar%VS_MinOMSpd - LocalVar%GenSpeedF     ! Current speed error - Region 1.5 PI-control (Below Rated)
+    
+    
+    !END SUBROUTINE ComputeVariablesSetpoints
+
  ! -----------------------------------------------------------------------------------
     ! Read avrSWAP array passed from ServoDyn    
     SUBROUTINE ReadAvrSWAP(avrSWAP, LocalVar)
@@ -251,7 +329,8 @@ CONTAINS
         CALL ParseInput(UnControllerParameters,CurLine,'PS_Mode',accINFILE(1),CntrPar%PS_Mode,ErrVar)
         CALL ParseInput(UnControllerParameters,CurLine,'SD_Mode',accINFILE(1),CntrPar%SD_Mode,ErrVar)
         CALL ParseInput(UnControllerParameters,CurLine,'FL_Mode',accINFILE(1),CntrPar%FL_Mode,ErrVar)
-        CALL ParseInput(UnControllerParameters,CurLine,'Flp_Mode',accINFILE(1),CntrPar%Flp_Mode,ErrVar)
+        CALL ParseInput(UnControllerParameters,CurLine,'DAC_Mode',accINFILE(1),CntrPar%DAC_Mode,ErrVar)
+        CALL ParseInput(UnControllerParameters,CurLine,'DAC_Type',accINFILE(1),CntrPar%DAC_Type,ErrVar)
         CALL ParseInput(UnControllerParameters,CurLine,'OL_Mode',accINFILE(1),CntrPar%OL_Mode,ErrVar)
 
         CALL ReadEmptyLine(UnControllerParameters,CurLine)
@@ -265,8 +344,9 @@ CONTAINS
         CALL ParseInput(UnControllerParameters,CurLine,'F_SSCornerFreq',accINFILE(1),CntrPar%F_SSCornerFreq,ErrVar)
         CALL ParseInput(UnControllerParameters,CurLine,'F_WECornerFreq',accINFILE(1),CntrPar%F_WECornerFreq,ErrVar)
         CALL ParseAry(UnControllerParameters, CurLine, 'F_FlCornerFreq', CntrPar%F_FlCornerFreq, 2, accINFILE(1), ErrVar )
+        !CALL ParseInput(UnControllerParameters, CurLine, 'F_FlCornerFreq', accINFILE(1),CntrPar%F_FlCornerFreq, ErrVar )
         CALL ParseInput(UnControllerParameters,CurLine,'F_FlHighPassFreq',accINFILE(1),CntrPar%F_FlHighPassFreq,ErrVar)
-        CALL ParseAry(UnControllerParameters, CurLine, 'F_FlpCornerFreq', CntrPar%F_FlpCornerFreq, 2, accINFILE(1), ErrVar )
+        CALL ParseAry(UnControllerParameters, CurLine, 'F_DACCornerFreq', CntrPar%F_DACCornerFreq, 2, accINFILE(1), ErrVar )
         CALL ReadEmptyLine(UnControllerParameters,CurLine)
 
         !----------- BLADE PITCH CONTROLLER CONSTANTS -----------
@@ -377,12 +457,12 @@ CONTAINS
         CALL ParseInput(UnControllerParameters,CurLine,'Fl_Kp',accINFILE(1),CntrPar%Fl_Kp,ErrVar)
         CALL ReadEmptyLine(UnControllerParameters,CurLine) 
 
-        !------------ Flaps ------------
+        !------------ DISTRIBUTED AERODYNAMIC CONTROL ------------
         CALL ReadEmptyLine(UnControllerParameters,CurLine)   
-        CALL ParseInput(UnControllerParameters,CurLine,'Flp_Angle',accINFILE(1),CntrPar%Flp_Angle,ErrVar)
-        CALL ParseInput(UnControllerParameters,CurLine,'Flp_Kp',accINFILE(1),CntrPar%Flp_Kp,ErrVar)
-        CALL ParseInput(UnControllerParameters,CurLine,'Flp_Ki',accINFILE(1),CntrPar%Flp_Ki,ErrVar)
-        CALL ParseInput(UnControllerParameters,CurLine,'Flp_MaxPit',accINFILE(1),CntrPar%Flp_MaxPit,ErrVar)
+        CALL ParseInput(UnControllerParameters,CurLine,'DAC_Param',accINFILE(1),CntrPar%DAC_Param,ErrVar)
+        CALL ParseInput(UnControllerParameters,CurLine,'DAC_Kp',accINFILE(1),CntrPar%DAC_Kp,ErrVar)
+        CALL ParseInput(UnControllerParameters,CurLine,'DAC_Ki',accINFILE(1),CntrPar%DAC_Ki,ErrVar)
+        CALL ParseInput(UnControllerParameters,CurLine,'DAC_Max',accINFILE(1),CntrPar%DAC_Max,ErrVar)
         CALL ReadEmptyLine(UnControllerParameters,CurLine)   
 
         !------------ Open loop input ------------
@@ -630,15 +710,21 @@ CONTAINS
             ErrVar%ErrMsg  = 'Fl_Mode must be 0, 1, or 2.'
         ENDIF
 
-        ! Flp_Mode
-        IF ((CntrPar%Flp_Mode < 0) .OR. (CntrPar%Flp_Mode > 3)) THEN
+        ! DAC_Mode
+        IF ((CntrPar%DAC_Mode < 0) .OR. (CntrPar%DAC_Mode > 5)) THEN
             ErrVar%aviFAIL = -1
-            ErrVar%ErrMsg  = 'Flp_Mode must be 0, 1, 2, or 3.'
+            ErrVar%ErrMsg  = 'DAC_Mode must be 0, 1, 2, 3, 4, or 5.'
         ENDIF
 
-        IF ((CntrPar%IPC_ControlMode > 0) .AND. (CntrPar%Flp_Mode > 0)) THEN
+        IF ((CntrPar%IPC_ControlMode > 0) .AND. (CntrPar%DAC_Mode > 0)) THEN
             ErrVar%aviFAIL = -1
-            ErrVar%ErrMsg   = 'ROSCO does not currently support IPC_ControlMode and Flp_Mode > 0'
+            ErrVar%ErrMsg   = 'ROSCO does not currently support IPC_ControlMode and DAC_Mode > 0'
+        ENDIF
+
+        ! DAC_Type
+        IF ((CntrPar%DAC_Type < 0) .OR. (CntrPar%DAC_Type > 1)) THEN
+            ErrVar%aviFAIL = -1
+            ErrVar%ErrMsg  = 'DAC_Type must be 0 (TE flaps) or 1 (LEMS).'
         ENDIF
         !------- FILTERS ----------------------------------------------------------
         
@@ -691,6 +777,11 @@ CONTAINS
         ENDIF
 
         IF (CntrPar%Fl_Mode > 0) THEN
+            !IF (CntrPar%F_FlCornerFreq <= 0.0) THEN
+            !    ErrVar%aviFAIL = -1
+            !    ErrVar%ErrMsg  = 'F_FlCornerFreq must be greater than zero.'
+            !ENDIF
+
             ! F_FlCornerFreq(1)  (frequency)
             IF (CntrPar%F_FlCornerFreq(1) <= 0.0) THEN
                 ErrVar%aviFAIL = -1
@@ -704,17 +795,17 @@ CONTAINS
             ENDIF
         ENDIF
 
-        IF (CntrPar%Flp_Mode > 0) THEN
-            ! F_FlpCornerFreq(1)  (frequency)
-            IF (CntrPar%F_FlpCornerFreq(1) <= 0.0) THEN
+        IF (CntrPar%DAC_Mode > 0) THEN
+            ! F_DACCornerFreq(1)  (frequency)
+            IF (CntrPar%F_DACCornerFreq(1) <= 0.0) THEN
                 ErrVar%aviFAIL = -1
-                ErrVar%ErrMsg  = 'F_FlpCornerFreq(1) must be greater than zero.'
+                ErrVar%ErrMsg  = 'F_DACCornerFreq(1) must be greater than zero.'
             ENDIF
 
-            ! F_FlpCornerFreq(2)  (damping)
-            IF (CntrPar%F_FlpCornerFreq(2) < 0.0) THEN
+            ! F_DACCornerFreq(2)  (damping)
+            IF (CntrPar%F_DACCornerFreq(2) < 0.0) THEN
                 ErrVar%aviFAIL = -1
-                ErrVar%ErrMsg  = 'F_FlpCornerFreq(2) must be greater than or equal to zero.'
+                ErrVar%ErrMsg  = 'F_DACCornerFreq(2) must be greater than or equal to zero.'
             ENDIF
         ENDIF
                      

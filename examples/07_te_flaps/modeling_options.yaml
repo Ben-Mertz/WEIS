@@ -45,10 +45,16 @@ Level3: # Options for WEIS fidelity level 3 = nonlinear time domain
         PtfmRDOF : False
         PtfmPDOF : False
         PtfmYDOF : False
+
+    xfoil:
+        path       : /home/mertzb/Xfoil/bin/xfoil # Path to xfoil executable. Only used for blades with distributed aerodynamic control devices 
+        run_parallel: False
 ROSCO:
     SD_Mode: 0
     Flp_Mode: 2
     zeta_vs: 1.0
+    omega_flp:          3.1
+    zeta_flp:           1.25
     
 DLC_driver:
     DLCs:
@@ -60,6 +66,6 @@ DLC_driver:
               GridHeight: 240
               GridWidth: 240
 
-xfoil:
-    path       : /Users/pbortolo/work/1_wisdem/Xfoil/bin/xfoil # Path to xfoil executable. Only used for blades with distributed aerodynamic control devices 
-    run_parallel: False
+# xfoil:
+#     path       : /home/mertzb/Xfoil/bin/xfoil # Path to xfoil executable. Only used for blades with distributed aerodynamic control devices 
+#     run_parallel: False

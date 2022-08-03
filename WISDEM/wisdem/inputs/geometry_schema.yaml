@@ -392,6 +392,76 @@ properties:
                     # 3D_fem:
                         # type: object
                         # TODO
+                    # aerodynamic_control:
+                    #     type: object
+                    #     # default: {}
+                    #     properties:
+                    #         te_flaps:
+                    #             type: object
+                    #             # default: {}
+                    #             properties:
+                    #                 span_start:
+                    #                     type: number
+                    #                     default: 0.5
+                    #                     description: Spanwise percentage start of TE flap
+                    #                     minimum: 0.0
+                    #                     maximum: 1.0
+                    #                 span_end:
+                    #                     type: number
+                    #                     default: 0.95
+                    #                     description: Spanwise percentage end of TE flap
+                    #                     minimum: 0.0
+                    #                     maximum: 1.0
+                    #                 chord_start:
+                    #                     type: number
+                    #                     default: 0.8
+                    #                     description: Chordwise percentage starting location of flap
+                    #                     minimum: 0.5
+                    #                     maximum: 1.0
+                    #                 delta_max_pos:
+                    #                     type: number
+                    #                     default: 0.17453292519943295   # 10 deg
+                    #                     unit: rad
+                    #                     description: Maximum flap deflection angle
+                    #                     minimum: -0.5
+                    #                     maximum: 0.5
+                    #                 delta_max_neg:
+                    #                     type: number
+                    #                     default: -0.17453292519943295   # -10 deg
+                    #                     unit: rad
+                    #                     description: Minimum flap deflection angle
+                    #                     minimum: -0.5
+                    #                     maximum: 0.5
+                    #         le_spoilers:
+                    #             type: object
+                    #             # default: {}
+                    #             properties:
+                    #                 span_start:
+                    #                     type: number
+                    #                     default: 0.5
+                    #                     description: Spanwise percentage start of LE spoiler
+                    #                     minimum: 0.0
+                    #                     maximum: 1.0
+                    #                 span_end:
+                    #                     type: number
+                    #                     default: 0.95
+                    #                     description: Spanwise percentage end of LE spoiler
+                    #                     minimum: 0.0
+                    #                     maximum: 1.0
+                    #                 delta_max_pos:
+                    #                     type: number
+                    #                     default: 9.0
+                    #                     unit: mm
+                    #                     description: Maximum LE spoiler height
+                    #                     minimum: 0.0
+                    #                     maximum: 9.0
+                    #                 delta_max_neg:
+                    #                     type: number
+                    #                     default: 0.0
+                    #                     unit: mm
+                    #                     description: Minimum LE spoiler height
+                    #                     minimum: 0.0
+                    #                     maximum: 9.0
             hub:
                 type: object
                 properties:

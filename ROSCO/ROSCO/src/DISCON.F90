@@ -85,7 +85,7 @@ IF (((LocalVar%iStatus >= 0) .OR. (LocalVar%iStatus <= -8)) .AND. (ErrVar%aviFAI
     IF ((LocalVar%iStatus == -8) .AND. (ErrVar%aviFAIL >= 0))  THEN ! Write restart files
         CALL WriteRestartFile(LocalVar, CntrPar, objInst, RootName, SIZE(avcOUTNAME))    
     ENDIF
-    
+        
     CALL WindSpeedEstimator(LocalVar, CntrPar, objInst, PerfData, DebugVar, ErrVar)
     CALL ComputeVariablesSetpoints(CntrPar, LocalVar, objInst)
     CALL StateMachine(CntrPar, LocalVar)
@@ -97,8 +97,8 @@ IF (((LocalVar%iStatus >= 0) .OR. (LocalVar%iStatus <= -8)) .AND. (ErrVar%aviFAI
         CALL YawRateControl(avrSWAP, CntrPar, LocalVar, objInst, ErrVar)
     END IF
     
-    IF (CntrPar%Flp_Mode > 0) THEN
-        CALL FlapControl(avrSWAP, CntrPar, LocalVar, objInst)
+    IF (CntrPar%DAC_Mode > 0) THEN
+        CALL DACControl(avrSWAP, CntrPar, LocalVar, objInst)
     END IF
     
     IF ( CntrPar%LoggingLevel > 0 ) THEN

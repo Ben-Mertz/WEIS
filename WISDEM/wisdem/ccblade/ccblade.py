@@ -362,13 +362,13 @@ class CCAirfoil(object):
 
         self.unsteady = unsteady
 
-    def af_flap_coords(
-        self, xfoil_path, delta_flap=12.0, xc_hinge=0.8, yt_hinge=0.5, numNodes=250, multi_run=False, MPI_run=False
+    def af_DAC_coords(
+        self, xfoil_path, delta_DAC=12.0, xc_hinge=0.8, yt_hinge=0.5, numNodes=250, multi_run=False, MPI_run=False
     ):
         # This function is used to create and run xfoil to get airfoil coordinates for a given flap deflection
         # Set Needed parameter values
         AFName = self.AFName
-        df = str(delta_flap)  # Flap deflection angle in deg
+        df = str(delta_DAC)  # Flap deflection angle in deg
         numNodes = str(numNodes)  # number of panels to use (will be number of points in profile)
         dist_param = "0.5"  # TE/LE panel density ratio
         # Set filenames
@@ -438,10 +438,10 @@ class CCAirfoil(object):
         os.system(xfoil_path + " < " + xfoilFlnm + " > " + NUL_fname)  # <<< runs XFoil !
 
         # Load in saved airfoil coordinates (with flap) from xfoil and save to instance variables
-        flap_coords = np.loadtxt(saveFlnmAF)
-        self.af_flap_xcoords = flap_coords[:, 0]
-        self.af_flap_ycoords = flap_coords[:, 1]
-        self.ctrl = delta_flap  # bem: the way that this function is called in rotor_geometry_yaml, this instance is not going to be used when calculating polars
+        DAC_coords = np.loadtxt(saveFlnmAF)
+        self.af_DAC_xcoords = DAC_coords[:, 0]
+        self.af_DAC_ycoords = DAC_coords[:, 1]
+        self.ctrl = delta_DAC  # bem: the way that this function is called in rotor_geometry_yaml, this instance is not going to be used when calculating polars
 
         # Delete uneeded txt files script file
         if os.path.exists(CoordsFlnmAF):

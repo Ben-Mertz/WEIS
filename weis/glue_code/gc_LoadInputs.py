@@ -128,7 +128,7 @@ class WindTurbineOntologyPythonWEIS(WindTurbineOntologyPython):
                                                   self.modeling_options['Level3']['flag'])
         
         # XFoil
-        if not osp.isfile(self.modeling_options['Level3']["xfoil"]["path"]) and self.modeling_options['ROSCO']['Flp_Mode']:
+        if not osp.isfile(self.modeling_options['Level3']["xfoil"]["path"]) and self.modeling_options['ROSCO']['DAC_Type'] == 0:
             raise Exception("A distributed aerodynamic control device is defined in the geometry yaml, but the path to XFoil in the modeling options is not defined correctly")
 
         # Compute the number of DLCs that will be run
@@ -158,11 +158,23 @@ class WindTurbineOntologyPythonWEIS(WindTurbineOntologyPython):
 
     def set_openmdao_vectors_control(self):
         # Distributed aerodynamic control devices along blade
-        self.modeling_options['WISDEM']['RotorSE']['n_te_flaps']      = 0
+        self.modeling_options['WISDEM']['RotorSE']['n_DAC']      = 0
         if 'aerodynamic_control' in self.wt_init['components']['blade']:
             if 'te_flaps' in self.wt_init['components']['blade']['aerodynamic_control']:
-                self.modeling_options['WISDEM']['RotorSE']['n_te_flaps'] = len(self.wt_init['components']['blade']['aerodynamic_control']['te_flaps'])
+                if 'le_spoilers' in self.wt_init['components']['blade']['aerodynamic_control']:
+                    raise Exception('You cannot use more than one active flow control device, remove one of them from the yaml file.')
+                self.modeling_options['WISDEM']['RotorSE']['n_DAC'] = len(self.wt_init['components']['blade']['aerodynamic_control']['te_flaps'])
                 self.modeling_options['WISDEM']['RotorSE']['n_tab']   = 3
+                # self.modeling_options['WISDEM']['RotorSE']['DAC_Type'] = 0 #This is a new flag to distinguish between te_flaps [0] and le_spoilers [1], other devices can be added later
+            elif 'le_spoilers' in self.wt_init['components']['blade']['aerodynamic_control']:
+                if 'te_flaps' in self.wt_init['components']['blade']['aerodynamic_control']: # I'm not sure this is needed based on logic from te_flaps
+                    raise Exception('You cannot use more than one active flow control device, remove one of them from the yaml file.') 
+                self.modeling_options['WISDEM']['RotorSE']['n_DAC'] = len(self.wt_init['components']['blade']['aerodynamic_control']['le_spoilers'])
+                self.modeling_options['WISDEM']['RotorSE']['n_tab']   = 3 #TODO we may want to include this as a parameter that we can change in the case where we want to try and calture more non-linear connections between control parameter and polars
+                # self.modeling_options['WISDEM']['RotorSE']['DAC_Type'] = 1 #This is a new flag to distinguish between te_flaps [0] and le_spoilers [1], other devices can be added later
+            # if 'te_flaps' in self.wt_init['components']['blade']['aerodynamic_control']:
+            #     self.modeling_options['WISDEM']['RotorSE']['n_DAC'] = len(self.wt_init['components']['blade']['aerodynamic_control']['te_flaps'])
+            #     self.modeling_options['WISDEM']['RotorSE']['n_tab']   = 3
             else:
                 raise Exception('A distributed aerodynamic control device is provided in the yaml input file, but not supported by wisdem.')
 
@@ -219,9 +231,9 @@ class WindTurbineOntologyPythonWEIS(WindTurbineOntologyPython):
             self.wt_init['control']['torque']['zeta_vs']  = float(wt_opt['tune_rosco_ivc.zeta_vs'])
             self.wt_init['control']['pitch']['Kp_float']  = float(wt_opt['tune_rosco_ivc.Kp_float'])
             self.wt_init['control']['pitch']['ptfm_freq']  = float(wt_opt['tune_rosco_ivc.ptfm_freq'])
-            if self.modeling_options['ROSCO']['Flp_Mode'] > 0:
-                self.wt_init['control']['dac']['Flp_omega']= float(wt_opt['tune_rosco_ivc.Flp_omega'])
-                self.wt_init['control']['dac']['Flp_zeta'] = float(wt_opt['tune_rosco_ivc.Flp_zeta'])
+            if self.modeling_options['ROSCO']['DAC_Mode'] > 0:
+                self.wt_init['control']['DAC']['DAC_omega']= float(wt_opt['tune_rosco_ivc.DAC_omega'])
+                self.wt_init['control']['DAC']['DAC_zeta'] = float(wt_opt['tune_rosco_ivc.DAC_zeta'])
             if 'IPC' in self.wt_init['control'].keys():
                 self.wt_init['control']['IPC']['IPC_gain_1P'] = float(wt_opt['tune_rosco_ivc.IPC_Ki1p'])
 

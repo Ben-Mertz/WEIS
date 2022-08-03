@@ -60,7 +60,8 @@ class Controller():
         self.PS_Mode            = controller_params['PS_Mode']
         self.SD_Mode            = controller_params['SD_Mode']
         self.Fl_Mode            = controller_params['Fl_Mode']
-        self.Flp_Mode           = controller_params['Flp_Mode']
+        self.DAC_Mode           = controller_params['DAC_Mode']
+        self.DAC_Type           = controller_params['DAC_Type']
 
         # Necessary parameters
         self.U_pc = list_check(controller_params['U_pc'], return_bool=False)
@@ -80,7 +81,7 @@ class Controller():
         self.sd_maxpit          = controller_params['sd_maxpit']
         self.WS_GS_n            = controller_params['WS_GS_n']
         self.PC_GS_n            = controller_params['PC_GS_n']
-        self.flp_maxpit         = controller_params['flp_maxpit']
+        self.DAC_max            = controller_params['DAC_max']
         self.Kp_ipc1p           = controller_params['IPC_Kp1p']
         self.Ki_ipc1p           = controller_params['IPC_Ki1p']
         self.Kp_ipc2p           = controller_params['IPC_Kp2p']
@@ -88,13 +89,13 @@ class Controller():
         self.IPC_Vramp         = controller_params['IPC_Vramp']
 
         #  Optional parameters without defaults
-        if self.Flp_Mode > 0:
+        if self.DAC_Mode > 0:
             try:
-                self.flp_kp_norm = controller_params['flp_kp_norm']
-                self.flp_tau     = controller_params['flp_tau']
+                self.DAC_kp_norm = controller_params['DAC_kp_norm']
+                self.DAC_tau     = controller_params['DAC_tau']
             except:
                 raise Exception(
-                    'ROSCO_toolbox:controller: flp_kp_norm and flp_tau must be set if Flp_Mode > 0')
+                    'ROSCO_toolbox:controller: DAC_kp_norm and DAC_tau must be set if DAC_Mode > 0')
 
         if self.Fl_Mode > 0:
             try:
@@ -370,21 +371,21 @@ class Controller():
         else:
             self.Kp_float = 0.0
         
-        # Flap actuation 
-        if self.Flp_Mode >= 1:
-            self.flp_angle = 0.0
+        # DAC actuation 
+        if self.DAC_Mode >= 1:
+            self.DAC_Param = 0.0
             try:
-                self.tune_flap_controller(turbine)
+                self.tune_DAC_controller(turbine)
             except AttributeError:
-                print('ERROR: If Flp_Mode > 0, you need to have blade information loaded in the turbine object.')
+                print('ERROR: If DAC_Mode > 0, you need to have blade information loaded in the turbine object.')
                 raise
             except UnboundLocalError:
-                print('ERROR: You are attempting to tune a flap controller for a blade without flaps!')
+                print('ERROR: You are attempting to tune a DAC controller for a blade without a DAC device!')
                 raise
         else:
-            self.flp_angle = 0.0
-            self.Ki_flap = np.array([0.0])
-            self.Kp_flap = np.array([0.0])
+            self.DAC_Param = 0.0
+            self.Ki_DAC = np.array([0.0])
+            self.Kp_DAC = np.array([0.0])
 
         # --- Set up filters ---
         self.f_lpf_cornerfreq = turbine.bld_edgewise_freq / 4
@@ -393,7 +394,7 @@ class Controller():
         if 'f_lpf_cornerfreq' in self.controller_params['filter_params']:
             self.f_lpf_cornerfreq = self.controller_params['filter_params']['f_lpf_cornerfreq']
 
-    def tune_flap_controller(self,turbine):
+    def tune_DAC_controller(self,turbine):
         '''
         Tune controller for distributed aerodynamic control
 
@@ -439,22 +440,26 @@ class Controller():
             # assume airfoil section as AOA of zero for slope calculations - for now
             a0_ind = section[0]['Alpha'].index(np.min(np.abs(section[0]['Alpha'])))
             # Coefficients 
-            if section[0]['NumTabs'] == 3:  # sections with 3 flaps
+            if section[0]['NumTabs'] == 3:  # sections with 3 DAC
                 Clm[i,] = section[0]['Cl'][a0_ind]
                 Cdm[i,] = section[0]['Cd'][a0_ind]
                 Cl0[i,] = section[1]['Cl'][a0_ind]
                 Cd0[i,] = section[1]['Cd'][a0_ind]
                 Clp[i,] = section[2]['Cl'][a0_ind]
                 Cdp[i,] = section[2]['Cd'][a0_ind]
-                Ctrl_flp = float(section[2]['Ctrl'])
-            else:                           # sections without 3 flaps
+                Ctrl_DAC = float(section[2]['Ctrl'])
+            else:                           # sections without 3 DAC
                 Cl0[i,] = Clp[i,] = Clm[i,] = section[0]['Cl'][a0_ind]
                 Cd0[i,] = Cdp[i,] = Cdm[i,] = section[0]['Cd'][a0_ind]
                 Ctrl = float(section[0]['Ctrl'])
 
         # Find slopes
-        Kcl = (Clp - Cl0)/( (Ctrl_flp-Ctrl)*deg2rad )
-        Kcd = (Cdp - Cd0)/( (Ctrl_flp-Ctrl)*deg2rad )
+        if self.DAC_Type == 0:
+            Kcl = (Clp - Cl0)/( (Ctrl_DAC-Ctrl)*deg2rad )
+            Kcd = (Cdp - Cd0)/( (Ctrl_DAC-Ctrl)*deg2rad )
+        else:
+            Kcl = (Clp - Cl0)/( (Ctrl_DAC-Ctrl) )
+            Kcd = (Cdp - Cd0)/( (Ctrl_DAC-Ctrl) )
 
         # Find integrated constants
         self.kappa = np.zeros(len(v_rel))
@@ -466,11 +471,11 @@ class Controller():
             self.kappa[i]=C1[i]+C2[i]
 
         # PI Gains
-        if (self.flp_kp_norm == 0 or self.flp_tau == 0) or (not self.flp_kp_norm or not self.flp_tau):
-            raise ValueError('flp_kp_norm and flp_tau must be nonzero for Flp_Mode >= 1')
+        if (self.DAC_kp_norm == 0 or self.DAC_tau == 0) or (not self.DAC_kp_norm or not self.DAC_tau):
+            raise ValueError('DAC_kp_norm and DAC_tau must be nonzero for DAC_Mode >= 1')
 
-        self.Kp_flap = self.flp_kp_norm / self.kappa
-        self.Ki_flap = self.flp_kp_norm / self.kappa / self.flp_tau
+        self.Kp_DAC = self.DAC_kp_norm / self.kappa
+        self.Ki_DAC = self.DAC_kp_norm / self.kappa / self.DAC_tau
 
 class ControllerBlocks():
     '''

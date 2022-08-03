@@ -205,17 +205,37 @@ class WindTurbineOntologyPython(object):
                 ]["webs"][i]["name"]
 
             # Distributed aerodynamic control devices along blade
-            self.modeling_options["WISDEM"]["RotorSE"]["n_te_flaps"] = 0
-            if "aerodynamic_control" in self.wt_init["components"]["blade"]:
-                if "te_flaps" in self.wt_init["components"]["blade"]["aerodynamic_control"]:
-                    self.modeling_options["WISDEM"]["RotorSE"]["n_te_flaps"] = len(
-                        self.wt_init["components"]["blade"]["aerodynamic_control"]["te_flaps"]
-                    )
-                    self.modeling_options["WISDEM"]["RotorSE"]["n_tab"] = 3
-                else:
-                    raise RuntimeError(
-                        "A distributed aerodynamic control device is provided in the yaml input file, but not supported by wisdem."
-                    )
+            self.modeling_options['WISDEM']['RotorSE']['n_DAC']      = 0
+            if 'aerodynamic_control' in self.wt_init['components']['blade']:
+                if 'te_flaps' in self.wt_init['components']['blade']['aerodynamic_control']:
+                    if 'le_spoilers' in self.wt_init['components']['blade']['aerodynamic_control']:
+                        raise Exception('You cannot use more than one active flow control device, remove one of them from the yaml file.')
+                    self.modeling_options['WISDEM']['RotorSE']['n_DAC'] = len(self.wt_init['components']['blade']['aerodynamic_control']['te_flaps'])
+                    self.modeling_options['WISDEM']['RotorSE']['n_tab']   = 3
+                    # self.modeling_options['WISDEM']['RotorSE']['DAC_Type'] = 0 #This is a new flag to distinguish between te_flaps [0] and le_spoilers [1], other devices can be added later
+                elif 'le_spoilers' in self.wt_init['components']['blade']['aerodynamic_control']:
+                    if 'te_flaps' in self.wt_init['components']['blade']['aerodynamic_control']: # I'm not sure this is needed based on logic from te_flaps
+                        raise Exception('You cannot use more than one active flow control device, remove one of them from the yaml file.') 
+                    self.modeling_options['WISDEM']['RotorSE']['n_DAC'] = len(self.wt_init['components']['blade']['aerodynamic_control']['le_spoilers'])
+                    self.modeling_options['WISDEM']['RotorSE']['n_tab']   = 3 #TODO we may want to include this as a parameter that we can change in the case where we want to try and calture more non-linear connections between control parameter and polars
+                    # self.modeling_options['WISDEM']['RotorSE']['DAC_Type'] = 1 #This is a new flag to distinguish between te_flaps [0] and le_spoilers [1], other devices can be added later
+                # if 'te_flaps' in self.wt_init['components']['blade']['aerodynamic_control']:
+                #     self.modeling_options['WISDEM']['RotorSE']['n_DAC'] = len(self.wt_init['components']['blade']['aerodynamic_control']['te_flaps'])
+                #     self.modeling_options['WISDEM']['RotorSE']['n_tab']   = 3
+            else:
+                raise Exception('A distributed aerodynamic control device is provided in the yaml input file, but not supported by wisdem.')
+            
+            # self.modeling_options["WISDEM"]["RotorSE"]["n_te_flaps"] = 0
+            # if "aerodynamic_control" in self.wt_init["components"]["blade"]:
+            #     if "te_flaps" in self.wt_init["components"]["blade"]["aerodynamic_control"]:
+            #         self.modeling_options["WISDEM"]["RotorSE"]["n_te_flaps"] = len(
+            #             self.wt_init["components"]["blade"]["aerodynamic_control"]["te_flaps"]
+            #         )
+            #         self.modeling_options["WISDEM"]["RotorSE"]["n_tab"] = 3
+            #     else:
+            #         raise RuntimeError(
+            #             "A distributed aerodynamic control device is provided in the yaml input file, but not supported by wisdem."
+            #         )
 
             joint_pos = self.wt_init["components"]["blade"]["internal_structure_2d_fem"]["joint"]["position"]
             if joint_pos > 0.0:
