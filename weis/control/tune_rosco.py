@@ -202,11 +202,11 @@ class TuneROSCO(ExplicitComponent):
         rosco_init_options['omega_vs']    = float(inputs['omega_vs'])
         rosco_init_options['zeta_vs']     = float(inputs['zeta_vs'])
         if rosco_init_options['DAC_Mode'] > 0:
-            rosco_init_options['omega_DAC'] = inputs['DAC_omega']
-            rosco_init_options['zeta_DAC']  = inputs['DAC_zeta']
+            rosco_init_options['DAC_omega'] = inputs['DAC_omega']
+            rosco_init_options['DAC_zeta']  = inputs['DAC_zeta']
         else:
-            rosco_init_options['omega_DAC'] = 0.0
-            rosco_init_options['zeta_DAC']  = 0.0
+            rosco_init_options['DAC_omega'] = 0.0
+            rosco_init_options['DAC_zeta']  = 0.0
         #
         rosco_init_options['max_pitch']   = float(inputs['max_pitch'])
         rosco_init_options['min_pitch']   = float(inputs['min_pitch'])

@@ -93,7 +93,7 @@ CONTAINS
         IF (CntrPar%SD_Mode == 1) THEN
             LocalVar%PC_PitComT = Shutdown(LocalVar, CntrPar, objInst)
         ENDIF
-        
+
         ! Saturate collective pitch commands:
         LocalVar%PC_PitComT = saturate(LocalVar%PC_PitComT, LocalVar%PC_MinPit, CntrPar%PC_MaxPit)                    ! Saturate the overall command using the pitch angle limits
         LocalVar%PC_PitComT = ratelimit(LocalVar%PC_PitComT, LocalVar%PC_PitComT_Last, CntrPar%PC_MinRat, CntrPar%PC_MaxRat, LocalVar%DT) ! Saturate the overall command of blade K using the pitch rate limit
@@ -488,7 +488,17 @@ CONTAINS
             
                 ! Pass direct and quadrature axis through the inverse Coleman transform to get the commanded parameter values
                 CALL ColemanTransformInverse(DAC_axisTilt_1P, DAC_axisYaw_1P, LocalVar%Azimuth, NP_1, 0.0_DbKi, LocalVar%DAC_Param)
-                
+            
+            ! Shutdown Aero control (logic only for LE Spoilers currently)
+            ELSEIF (CntrPar%DAC_Mode == 4) THEN
+                DO K = 1,LocalVar%NumBl
+                    IF (LocalVar%SD) THEN
+                        ! Set to max extension
+                        LocalVar%DAC_Param(K) = CntrPar%DAC_Max
+                    ELSE
+                        LocalVar%DAC_Param(K) = 0.0
+                    ENDIF
+                END DO
             ENDIF
 
             ! Send to AVRSwap

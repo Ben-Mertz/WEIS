@@ -392,7 +392,7 @@ CONTAINS
         REAL(4)                      :: MaxYaw
         REAL(4)                      :: SD_slope
         REAL(4), Save                :: SD_time = 0.0
-        Logical                      :: downwind=.TRUE.
+        Logical                      :: downwind=.FALSE.
         Logical                      :: SD_p2s=.FALSE.
         
         ! Initialize Shutdown Varible
