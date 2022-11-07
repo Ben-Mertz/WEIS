@@ -222,6 +222,11 @@ properties:
                         type: object
                         description: Platform velocity feedback using nacelle IMU
                         default: {}
+                        optional:
+                            - gain
+                            - twr_freq
+                            - ptfm_freq
+                            - filter
                         properties:
                             gain:
                                 type: number
@@ -244,10 +249,10 @@ properties:
                     twr_feedback:
                         type: object
                         description: Tower velocity feedback using nacelle IMU
-                        required:
-                            - gain
-                        optional:
-                            - filter
+                        # required:
+                        #     - gain
+                        # optional:
+                        #     - filter
                         properties:
                             gain:
                                 type: number

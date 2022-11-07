@@ -44,7 +44,8 @@ Level3: # Options for WEIS fidelity level 3 = nonlinear time domain
         PtfmYDOF : False
     ROSCO:
         SD_Mode: 0
-        Flp_Mode: 2
+        DAC_Mode: 1  # 0 - no DAC control 1 - Constant DAC Parameter 2 - PI DAC Control 3 - Shutdown control only
+        DAC_Model: 1 # 0 - use polars from yaml 1 - Use XFOIL to generate polars 2 - Use Generic DAC Model (for LE Spoilers)
 
 openfast:
     analysis_settings:
@@ -76,5 +77,5 @@ yaml:
     path2schema: windIO/windIO/turbine/IEAontology_schema.yaml   # Path to the yams schema to run the validation
 
 xfoil:
-    path       : /home/mertzb/Xfoil/bin/xfoil # Path to xfoil executable. Only used for blades with distributed aerodynamic control devices 
+    path       : /Users/faculty/mertzb/Documents/WT_codes/xfoil/bin/xfoil # Path to xfoil executable. Only used for blades with distributed aerodynamic control devices 
     run_parallel: True

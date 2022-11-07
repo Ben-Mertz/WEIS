@@ -717,6 +717,7 @@ control:
         fl_feedback:
             twr_freq: 100                     # Frequency of notch in floating feedback (F_NotchCornerFreq)
             ptfm_freq: .2                     # Frequency of LPF in floating feedback (F_FlCornerFreq)
+            gain: 1.0
     torque:
         control_type: tsr_tracking
         tsr: 7.01754386

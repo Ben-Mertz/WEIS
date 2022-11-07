@@ -381,6 +381,9 @@ CONTAINS
         TYPE(ObjectInstances), INTENT(INOUT)      :: objInst
         ! Internal Variables
         Integer(4)                                :: K
+        !Integer(4)                                :: t_flag(3) = 0
+        REAL(8)                                   :: t_comp(3)
+        REAL(8)                                   :: dep_time
         REAL(8)                                   :: rootMOOP_F(3)
         REAL(8)                                   :: RootMyb_Vel(3)
         REAL(8), SAVE                             :: RootMyb_Last(3)
@@ -452,6 +455,39 @@ CONTAINS
                     !    LocalVar%dac_param(K) = 0.0
                     !ENDIF
                 END DO
+            ! Simple Peak Shaving Aero control (logic only for LE Spoilers currently)
+            ELSEIF (CntrPar%DAC_Mode == 4) THEN
+                dep_time = 3.0
+                IF (LocalVar%Time >= 120.0) THEN
+                    DO K = 1,LocalVar%NumBl
+                        !RootMOOP_F(K) = SecLPFilter(LocalVar%rootMOOP(K),LocalVar%DT, CntrPar%F_FlpCornerFreq, CntrPar%F_FlpDamping, LocalVar%iStatus, .FALSE.,objInst%instSecLPF)
+                        IF (LocalVar%rootMOOP(K) > 25000000 .AND. LocalVar%t_flag(K) == 0) THEN
+                            LocalVar%t_flag(K) = 1
+                            LocalVar%t_start(K) = LocalVar%Time   
+                        ELSE
+                            LocalVar%t_flag(K) = 0
+                        ENDIF
+
+                        t_comp(K) = LocalVar%t_start(K) + dep_time
+                        IF ((LocalVar%t_flag(K) > 0) .AND. (LocalVar%Time <= t_comp(K))) THEN
+                            ! Set to max extension
+                            LocalVar%t_flag(K) = 1
+                            LocalVar%dac_param(K) = CntrPar%Flp_MaxPit
+                        ELSEIF ((LocalVar%t_flag(K) > 0) .AND. (LocalVar%Time > t_comp(K))) THEN
+                            LocalVar%t_flag(K) = 0
+                            LocalVar%dac_param(K) = 0.0
+                        ELSE
+                            LocalVar%dac_param(K) = 0.0
+                        ENDIF
+
+
+                    END DO
+                ELSE
+                    ! Do not deploy DAC device if less than 120 seconds of run time
+                    DO K = 1,LocalVar%NumBl
+                        LocalVar%dac_param(K) = 0.0
+                    END DO
+                ENDIF
             ENDIF
 
             ! Send to AVRSwap

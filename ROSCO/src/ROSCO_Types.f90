@@ -199,6 +199,8 @@ TYPE, PUBLIC :: LocalVariables
     REAL(8)                             :: Fl_PitCom                           ! Shutdown, .FALSE. if inactive, .TRUE. if active
     REAL(8)                             :: NACIMU_FA_AccF
     REAL(8)                             :: dac_param(3)                 ! DAC Parameter (if Flap Angle has units of rad)
+    INTEGER(4)                          :: t_flag(3)                    ! Flag for turning on LEMS [-]
+    REAL(8)                             :: t_start(3)                   ! Start time for turning LEMS devices on [s]
     END TYPE LocalVariables
 
 TYPE, PUBLIC :: ObjectInstances
