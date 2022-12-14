@@ -259,12 +259,19 @@ CONTAINS
         TYPE(ObjectInstances), INTENT(INOUT)    :: objInst
         ! Allocate Variables
         REAL(8)                      :: DelOmega                            ! Reference generator speed shift, rad/s.
+        INTEGER(4)                      :: K            ! Index used for looping through blades.
         
         ! ------ Setpoint Smoothing ------
+        
         IF ( CntrPar%SS_Mode == 1) THEN
             ! Find setpoint shift amount
             DelOmega = ((LocalVar%PC_PitComT - CntrPar%PC_MinPit)/0.524) * CntrPar%SS_VSGain - ((LocalVar%VS_GenPwr - LocalVar%VS_LastGenTrq))/CntrPar%VS_RtPwr * CntrPar%SS_PCGain ! Normalize to 30 degrees for now
             DelOmega = DelOmega * CntrPar%PC_RefSpd
+            DO K = 1,LocalVar%NumBl 
+                IF (LocalVar%t_flag(K) == 1) THEN
+                    DelOmega = DelOmega*0.5
+                ENDIF
+            END DO
             ! Filter
             LocalVar%SS_DelOmegaF = LPFilter(DelOmega, LocalVar%DT, CntrPar%F_SSCornerFreq, LocalVar%iStatus, .FALSE., objInst%instLPF) 
         ELSE
