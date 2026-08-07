@@ -34,6 +34,7 @@ from pCrunch import AeroelasticOutput, FatigueParams
 from openfast_io.StC_defaults        import default_StC_vt
 from weis.aeroelasticse.CaseGen_General import case_naming
 from wisdem.inputs import load_yaml, write_yaml
+from wisdem.ccblade.Polar import Polar
 
 
 logger = logging.getLogger("wisdem/weis")
@@ -174,7 +175,7 @@ class FASTLoadCases(ExplicitComponent):
                 val=np.zeros(n_span),
                 units='m',
                 desc='Leading-edge positions from a reference blade axis \
-                usually blade pitch axis). Locations are normalized by the \
+                usually blade pitch axis. Locations are normalized by the \
                 local chord length. Positive in -x direction for airfoil-aligned coordinate system',
             )
             self.add_input(
@@ -755,7 +756,66 @@ class FASTLoadCases(ExplicitComponent):
         #  Allow user-defined OpenFAST options to override WISDEM-generated ones
         #  Re-load modeling options without defaults to learn only what needs to change, has already been validated when first loaded
         modopts_no_defaults = load_yaml(self.options['modeling_options']['fname_input_modeling'])
+               
+        # Apply Leading Edge Erosion Corrections to Airfoil Lift and Drag polars
+        r_lee = np.array(fst_vt['ElastoDynBlade']['BlFract'])*(fst_vt['ElastoDyn']['TipRad'] - fst_vt['ElastoDyn']['HubRad']) + fst_vt['ElastoDyn']['HubRad'] # Create array of radial locations where airfoil polars are included (accounting for hub radius)
+        
+        if modopt['OpenFAST']['le_erosion']['lee_mod']: # if modeling option to include leading edge erosion corrections is included in modeling options yaml file
+            print('\n-----------------------------------------------------------------------------')
+            print('   Calculating Leading Edge Erosion Damage Distribution')
+            print('-----------------------------------------------------------------------------\n')
 
+            for i in range(len(r_lee)): # No of blade radial stations  
+            
+                if modopt['OpenFAST']['le_erosion']['erosion_model'] == 1: # Springer Model of erosion distribution model selected
+                    blade_damage = modopt['OpenFAST']['le_erosion']['blade_damage']
+                    sm_exp = modopt['OpenFAST']['le_erosion']['sm_exp']
+                    Const = blade_damage/(modopt['OpenFAST']['le_erosion']['r_blade_damage']**sm_exp)
+                    damage_cat = Const * (r_lee[i]/fst_vt['ElastoDyn']['TipRad'])**(sm_exp)      
+                    
+                elif modopt['OpenFAST']['le_erosion']['erosion_model'] == 2: # User defined piecewise constant model of erosion distribution model selected
+                    rR = r_lee[i]/fst_vt['ElastoDyn']['TipRad'] # Normalize radial locations
+                    if rR < modopt['OpenFAST']['le_erosion']['em_userdefined'][0]: # TODO: Need to potentially add error handling if the values are not constantly increasing
+                        damage_cat = 0.0
+                    elif rR >= modopt['OpenFAST']['le_erosion']['em_userdefined'][0] and rR < modopt['OpenFAST']['le_erosion']['em_userdefined'][1]:
+                        damage_cat = 1.0
+                    elif rR >= modopt['OpenFAST']['le_erosion']['em_userdefined'][1] and rR < modopt['OpenFAST']['le_erosion']['em_userdefined'][2]:
+                        damage_cat = 2.0 
+                    elif rR >= modopt['OpenFAST']['le_erosion']['em_userdefined'][2] and rR < modopt['OpenFAST']['le_erosion']['em_userdefined'][3]:
+                        damage_cat = 3.0
+                    elif rR >= modopt['OpenFAST']['le_erosion']['em_userdefined'][3] and rR < modopt['OpenFAST']['le_erosion']['em_userdefined'][4]:
+                        damage_cat = 4.0
+                    elif rR >= modopt['OpenFAST']['le_erosion']['em_userdefined'][4] and rR < modopt['OpenFAST']['le_erosion']['em_userdefined'][5]:
+                        damage_cat = 5.0
+                    elif rR >= modopt['OpenFAST']['le_erosion']['em_userdefined'][5]:
+                        damage_cat = 6.0 
+                    else:
+                        raise ValueError('You need to provide a valid set of transition points of damage criteria for user defined erosion distribution model') 
+                else:
+                    raise ValueError('You need to provide a valid erosion distribution model model')
+                    
+                print('   r/R:', "{:.4f}".format(r_lee[i]/fst_vt['ElastoDyn']['TipRad']),'\t damage_cat:', "{:.5f}".format(damage_cat)) 
+                
+                # Apply corrections to aerodynamic polars
+                oldpolar = Polar(None, fst_vt['AeroDyn']['af_data'][i][:][0]['Alpha'], fst_vt['AeroDyn']['af_data'][i][:][0]['Cl'], fst_vt['AeroDyn']['af_data'][i][:][0]['Cd'], fst_vt['AeroDyn']['af_data'][i][:][0]['Cm'])
+                
+                if not modopt['OpenFAST']['from_openfast']: # Percent thickness comes from input yaml file
+                    newpolar = oldpolar.correctionLEE(inputs['rthick'][i],damage_cat)
+                else: # If OpenFAST model is provided, the thickness is not conveniently defined...This interpolates between user defined distribution from modeling yaml file
+                    rthick = np.interp(fst_vt['ElastoDynBlade']['BlFract'][i], modopt['OpenFAST']['le_erosion']['r_tcr'], modopt['OpenFAST']['le_erosion']['tcr'])
+                    # if fst_vt['ElastoDynBlade']['BlFract'][i] <= 0.5:
+                    #     rthick = 1.0
+                    # elif fst_vt['ElastoDynBlade']['BlFract'][i] > 0.5 and fst_vt['ElastoDynBlade']['BlFract'][i] <= 0.75:
+                    #     rthick = 0.24
+                    # else:
+                    #     rthick = 0.21
+                    newpolar = oldpolar.correctionLEE(rthick,damage_cat)
+                
+                # Update Aerodyn Polars After Leading Edge Erosion Corrections Applied
+                fst_vt['AeroDyn']['af_data'][i][:][0]['Alpha'] = newpolar.alpha
+                fst_vt['AeroDyn']['af_data'][i][:][0]['Cl'] = newpolar.cl
+                fst_vt['AeroDyn']['af_data'][i][:][0]['Cd'] = newpolar.cd
+            print('\n') # Finish printout for LEE 
         
         # Backwards compatibility with Level3
         if 'Level3' in modopts_no_defaults:

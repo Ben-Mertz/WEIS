@@ -3148,6 +3148,51 @@ properties:
                 type: string
                 default: unused
                 description: OpenFAST input directory, containing .fst file.  Absolute path or relative to modeling input
+            le_erosion: &oflee
+                type: object
+                default: {}
+                description: Leading edge erosion modelling options in OpenFAST
+                properties:
+                    lee_mod:
+                        type: boolean
+                        default: False
+                        description: Whether we apply leading edge erosion correction to OpenFAST airfoil polars
+                    erosion_model:
+                        type: integer
+                        default: 0
+                        description: Flag for which type of erosion spanwise distribution model to use [0 = None, 1 = Springer Model, 2 = User defined step-wise]
+                    blade_damage:
+                        type: number
+                        default: 0.0
+                        minimum: 0.0
+                        maximum: 6.0
+                        description: Catagory of blade damage at specified percent span [must be a value between 0 and 6 if erosion_model = 1]
+                    r_blade_damage:
+                        type: number
+                        default: 0.98
+                        minimum: 0.0
+                        maximum: 1.0
+                        description: Catagory of blade damage at specified percent span [Should be speficied along with blade_damage]
+                    sm_exp:
+                        type: number
+                        default: 6.7
+                        description: Springer Model erosion model exponent [must be provided if erosion_model = 1]
+                    em_userdefined:
+                        type: array
+                        default: [1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
+                        description: User defined values for spanwise locations of steps to different leading edge erosion damage catagories (must provide 6 normalized blade stations and can be a number greater than 1.0 if catagory not experienced on blade) [must be provided if erosion_model = 2]
+                    r_tcr:
+                        type: array
+                        default: [0.0, 0.5, 0.75, 1.0]
+                        description: Normalized blade stations where thickness to chord ratios are specified (must be specified if from_openfast = True)
+                    tcr:
+                        type: array
+                        default: [1.0, 1.0, 0.24, 0.21]
+                        description: Thickness to chord ratio at specified blade stations (must be specified if from_openfast = True)
+                    polar_deltas_file:
+                        type: string
+                        default: unused
+                        description: Absolute path to .dat file with information about how lift and drag polars need to be modified to account for leading edge erosion [must be provided if lee_mod is True]             
             xfoil:
                 type: object
                 default: {}
