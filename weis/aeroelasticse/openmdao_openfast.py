@@ -800,16 +800,10 @@ class FASTLoadCases(ExplicitComponent):
                 oldpolar = Polar(None, fst_vt['AeroDyn']['af_data'][i][:][0]['Alpha'], fst_vt['AeroDyn']['af_data'][i][:][0]['Cl'], fst_vt['AeroDyn']['af_data'][i][:][0]['Cd'], fst_vt['AeroDyn']['af_data'][i][:][0]['Cm'])
                 
                 if not modopt['OpenFAST']['from_openfast']: # Percent thickness comes from input yaml file
-                    newpolar = oldpolar.correctionLEE(inputs['rthick'][i],damage_cat)
+                    newpolar = oldpolar.correctionLEE(inputs['rthick'][i],damage_cat,modopt['OpenFAST']['le_erosion']['polar_deltas_file'])
                 else: # If OpenFAST model is provided, the thickness is not conveniently defined...This interpolates between user defined distribution from modeling yaml file
                     rthick = np.interp(fst_vt['ElastoDynBlade']['BlFract'][i], modopt['OpenFAST']['le_erosion']['r_tcr'], modopt['OpenFAST']['le_erosion']['tcr'])
-                    # if fst_vt['ElastoDynBlade']['BlFract'][i] <= 0.5:
-                    #     rthick = 1.0
-                    # elif fst_vt['ElastoDynBlade']['BlFract'][i] > 0.5 and fst_vt['ElastoDynBlade']['BlFract'][i] <= 0.75:
-                    #     rthick = 0.24
-                    # else:
-                    #     rthick = 0.21
-                    newpolar = oldpolar.correctionLEE(rthick,damage_cat)
+                    newpolar = oldpolar.correctionLEE(rthick,damage_cat,modopt['OpenFAST']['le_erosion']['polar_deltas_file'])
                 
                 # Update Aerodyn Polars After Leading Edge Erosion Corrections Applied
                 fst_vt['AeroDyn']['af_data'][i][:][0]['Alpha'] = newpolar.alpha
