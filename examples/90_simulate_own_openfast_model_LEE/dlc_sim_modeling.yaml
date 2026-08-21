@@ -29,6 +29,9 @@ OpenFAST:
         lee_mod: True
         erosion_model: 1
         # em_userdefined: [0.5, 0.65, 0.75, 0.85, 1.0, 1.1]
+        r_tcr: [0.0, 0.5, 0.75, 1.0]
+        tcr: [1.0, 1.0, 0.24, 0.21]
+        r_blade_damage: 0.98
         blade_damage: 4.0
         sm_exp: 6.7
         polar_deltas_file: './LEE_Datafile.dat'
