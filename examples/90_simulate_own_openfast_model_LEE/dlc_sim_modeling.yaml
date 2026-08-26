@@ -27,7 +27,9 @@ OpenFAST:
     openfast_dir: ../00_setup/OpenFAST_models/IEA-15-240-RWT/IEA-15-240-RWT-UMaineSemi
     le_erosion:
         lee_mod: True
-        erosion_model: 1
+        erosion_model: 3
+        station_udlee: [20, 24, 25]
+        udlee: [3.5, 2.0, 5.0]
         # em_userdefined: [0.5, 0.65, 0.75, 0.85, 1.0, 1.1]
         r_tcr: [0.0, 0.5, 0.75, 1.0]
         tcr: [1.0, 1.0, 0.24, 0.21]

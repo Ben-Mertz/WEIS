@@ -791,6 +791,19 @@ class FASTLoadCases(ExplicitComponent):
                         damage_cat = 6.0 
                     else:
                         raise ValueError('You need to provide a valid set of transition points of damage criteria for user defined erosion distribution model') 
+
+                elif modopt['OpenFAST']['le_erosion']['erosion_model'] == 3: # User defined LEE defined at specific blade stations
+                    # TODO: We might need to add error handeling...making sure the two inputs are the same size and that you are not trying to assign blade stations beyond the max number
+                    if modopt['OpenFAST']['le_erosion']['station_udlee'] == [] or modopt['OpenFAST']['le_erosion']['udlee'] == []:
+                        raise ValueError('You specified a user defined leading edge erosion (erosion_model = 3) but did not provide any damage values or missing station values')
+
+                    for i_bs in range(len(modopt['OpenFAST']['le_erosion']['station_udlee'])):
+                        if modopt['OpenFAST']['le_erosion']['station_udlee'][i_bs] == i:
+                            damage_cat = modopt['OpenFAST']['le_erosion']['udlee'][i_bs]
+                            break
+                        else:
+                            damage_cat = 0.0
+                    
                 else:
                     raise ValueError('You need to provide a valid erosion distribution model model')
                     

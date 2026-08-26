@@ -3181,6 +3181,14 @@ properties:
                         type: array
                         default: [1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
                         description: User defined values for spanwise locations of steps to different leading edge erosion damage catagories (must provide 6 normalized blade stations and can be a number greater than 1.0 if catagory not experienced on blade) [must be provided if erosion_model = 2]
+                    station_udlee:
+                        type: array
+                        default: []
+                        description: Blade station (interger reference number) where specific damage catagory (must be provided if erosion_model = 3)
+                    udlee:
+                        type: array
+                        default: []
+                        description: User specified leading edge erosion damage catagory at specified blade stations (must be provided if erosion_model = 3)
                     r_tcr:
                         type: array
                         default: [0.0, 0.5, 0.75, 1.0]
